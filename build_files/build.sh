@@ -3,9 +3,12 @@
 set -ouex pipefail
 
 dnf5 remove -y \
+    cosign toolbox \
     firefox firefox-langpacks \
     kate kate-plugins kate-krunner-plugin kwrite \
-    filelight kfind kcharselect khelpcenter kde-partitionmanager
+    filelight kfind kde-partitionmanager \
+    kamera kcharselect khelpcenter \
+    || true
 
 echo "Installing the NVIDIA open driver..."
 
@@ -55,4 +58,5 @@ rm -f /tmp/tuxedo-control-center.rpm
 
 echo "TUXEDO Control Center installed successfully."
 
+# Always clean
 dnf5 clean all
