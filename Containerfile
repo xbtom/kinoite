@@ -1,17 +1,24 @@
 # Base Image
 ARG BASE_IMAGE=ghcr.io/ublue-os/kinoite-main:latest
+ARG FEDORA_MAJOR_VERSION=44
 
 # Allow build scripts to be referenced without being copied into the final image
 FROM scratch AS ctx
 COPY build_files /
 COPY system_files /system_files
 
+FROM ghcr.io/ublue-os/akmods:main-${FEDORA_MAJOR_VERSION} AS akmods-kernel
+FROM ghcr.io/ublue-os/akmods-nvidia-open:main-${FEDORA_MAJOR_VERSION} AS akmods-nvidia-open
+
 # Build mechrevo drivers
 FROM ${BASE_IMAGE} AS kernel-builder
 
 RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
+    --mount=type=bind,from=akmods-kernel,source=/kernel-rpms,target=/kernel-rpms \
+    --mount=type=bind,from=akmods-nvidia-open,source=/rpms,target=/nvidia-rpms \
     --mount=type=cache,dst=/var/cache \
     --mount=type=tmpfs,dst=/tmp \
+    /ctx/install-akmods-kernel.sh "$(sed -n 's/^KERNEL_VERSION=//p' /nvidia-rpms/kmods/nvidia-vars)" && \
     /ctx/mechrevo-drivers.sh
 
 # Build and publish image
@@ -43,6 +50,8 @@ RUN rm /opt && mkdir /opt
 
 RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     --mount=type=bind,from=kernel-builder,source=/out,target=/kernel-out \
+    --mount=type=bind,from=akmods-kernel,source=/kernel-rpms,target=/kernel-rpms \
+    --mount=type=bind,from=akmods-nvidia-open,source=/rpms,target=/nvidia-rpms \
     --mount=type=cache,dst=/var/cache \
     --mount=type=cache,dst=/var/log \
     --mount=type=tmpfs,dst=/tmp \
