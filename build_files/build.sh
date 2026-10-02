@@ -7,26 +7,29 @@ dnf5 remove -y \
     kate kate-plugins kate-krunner-plugin kwrite \
     filelight kfind kcharselect khelpcenter kde-partitionmanager
 
-# Copy the contents of system_files/ of the git repo to /
-# cp -avf "/ctx/system_files"/. /
+echo "Installing TUXEDO Control Center..."
 
-### Install packages
+dnf5 install -y libayatana-appindicator-gtk3
 
-# Packages can be installed from any enabled yum repo on the image.
-# RPMfusion repos are available by default in ublue main images
-# List of rpmfusion packages can be found here:
-# https://mirrors.rpmfusion.org/mirrorlist?path=free/fedora/updates/43/x86_64/repoview/index.html&protocol=https&redirect=1
+FEDORA_VER="$(rpm -E %fedora)"
+TUX_BASE_URL="https://rpm.tuxedocomputers.com/fedora/${FEDORA_VER}/x86_64/base"
+TCC_RPM_NAME="$(curl -sL "${TUX_BASE_URL}/" | grep -oE 'href="tuxedo-control-center_[^"]+\.rpm"' | tail -n 1 | cut -d'"' -f2)"
 
-# this installs a package from fedora repos
-# dnf5 install -y tmux
+if [ -z "${TCC_RPM_NAME}" ]; then
+    RPM_DOWNLOAD_URL="https://rpm.tuxedocomputers.com/fedora/41/x86_64/base/tuxedo-control-center_3.0.10.rpm"
+else
+    RPM_DOWNLOAD_URL="${TUX_BASE_URL}/${TCC_RPM_NAME}"
+fi
 
-# Use a COPR Example:
-#
-# dnf5 -y copr enable ublue-os/staging
-# dnf5 -y install package
-# Disable COPRs so they don't end up enabled on the final image:
-# dnf5 -y copr disable ublue-os/staging
+echo "Downloading TCC from ${RPM_DOWNLOAD_URL}..."
+curl -L -o /tmp/tuxedo-control-center.rpm "${RPM_DOWNLOAD_URL}"
 
-#### Example for enabling a System Unit File
+rpm -ivh --nodeps /tmp/tuxedo-control-center.rpm
+rm -f /tmp/tuxedo-control-center.rpm
 
-# systemctl enable podman.socket
+systemctl enable tccd.service
+systemctl enable tccd-sleep.service
+
+echo "TUXEDO Control Center installed successfully."
+
+dnf5 clean all
