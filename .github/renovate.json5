@@ -24,6 +24,12 @@
       automerge: false,
     },
     {
+      enabled: false,
+      matchManagers: ["dockerfile"],
+      matchPackageNames: ["ghcr.io/ublue-os/kinoite-main"],
+      matchUpdateTypes: ["pinDigest"],
+    },
+    {
       automerge: true,
       matchUpdateTypes: ["pin", "pinDigest"],
     },
