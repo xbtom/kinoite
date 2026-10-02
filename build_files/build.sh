@@ -10,7 +10,7 @@ dnf5 remove -y \
 echo "Installing the NVIDIA open driver..."
 
 NVIDIA_KERNEL_VERSION="$(sed -n 's/^KERNEL_VERSION=//p' /nvidia-rpms/kmods/nvidia-vars)"
-/ctx/install-akmods-kernel.sh "${NVIDIA_KERNEL_VERSION}"
+bash /ctx/install-akmods-kernel.sh "${NVIDIA_KERNEL_VERSION}"
 AKMODNV_PATH=/nvidia-rpms IMAGE_NAME=kinoite /nvidia-rpms/ublue-os/nvidia-install.sh
 
 echo "Installing Mechrevo kernel modules..."

@@ -22,7 +22,7 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     --mount=type=bind,from=akmods-nvidia-open,source=/rpms,target=/nvidia-rpms \
     --mount=type=cache,dst=/var/cache \
     --mount=type=tmpfs,dst=/tmp \
-    /ctx/install-akmods-kernel.sh "$(sed -n 's/^KERNEL_VERSION=//p' /nvidia-rpms/kmods/nvidia-vars)" && \
+    bash /ctx/install-akmods-kernel.sh "$(sed -n 's/^KERNEL_VERSION=//p' /nvidia-rpms/kmods/nvidia-vars)" && \
     /ctx/mechrevo-drivers.sh
 
 # Build and publish image
