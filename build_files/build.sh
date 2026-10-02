@@ -17,57 +17,12 @@ bash /ctx/install-akmods-kernel.sh "${NVIDIA_KERNEL_VERSION}"
 AKMODNV_PATH=/nvidia-rpms IMAGE_NAME=kinoite /nvidia-rpms/ublue-os/nvidia-install.sh
 
 echo "Installing Mechrevo kernel modules..."
-
-KERNEL_VERSION="$(< /kernel-out/kernel-version)"
-IMAGE_KERNEL_VERSION="$(rpm -q --qf "%{VERSION}-%{RELEASE}.%{ARCH}\n" kernel-core | head -n 1)"
-
-if [[ "${KERNEL_VERSION}" != "${IMAGE_KERNEL_VERSION}" ]]; then
-    echo "Mechrevo modules were built for ${KERNEL_VERSION}, but the image uses ${IMAGE_KERNEL_VERSION}." >&2
-    exit 1
-fi
-
-if [[ -z "$(find /kernel-out/modules -type f -name '*.ko' -print -quit)" ]]; then
-    echo "No Mechrevo kernel modules were found in /kernel-out/modules." >&2
-    exit 1
-fi
-
-MODULE_DIR="/usr/lib/modules/${KERNEL_VERSION}/extra/mechrevo"
-mkdir -p "${MODULE_DIR}"
-install -m 0644 /kernel-out/modules/*.ko "${MODULE_DIR}/"
-
-RYZEN_SMU_MODULE_DIR="/usr/lib/modules/${KERNEL_VERSION}/extra/ryzen_smu"
-mkdir -p "${RYZEN_SMU_MODULE_DIR}"
-install -m 0644 /kernel-out/ryzen_smu.ko "${RYZEN_SMU_MODULE_DIR}/"
-modinfo -k "${KERNEL_VERSION}" "${RYZEN_SMU_MODULE_DIR}/ryzen_smu.ko" >/dev/null
-
-mkdir -p /usr/lib/modules-load.d
-printf '%s\n' ryzen_smu > /usr/lib/modules-load.d/ryzen_smu.conf
-depmod -a "${KERNEL_VERSION}"
+bash /ctx/install-kernel-modules.sh
 
 echo "Installing Ryzen SMU and RyzenAdj runtime dependencies..."
 dnf5 install -y pciutils-libs
 
-echo "Installing TUXEDO Control Center..."
-
-dnf5 install -y libayatana-appindicator-gtk3
-
-FEDORA_VER="$(rpm -E %fedora)"
-TUX_BASE_URL="https://rpm.tuxedocomputers.com/fedora/${FEDORA_VER}/x86_64/base"
-TCC_RPM_NAME="$(curl -sL "${TUX_BASE_URL}/" | grep -oE 'href="tuxedo-control-center_[^"]+\.rpm"' | tail -n 1 | cut -d'"' -f2)"
-
-if [ -z "${TCC_RPM_NAME}" ]; then
-    RPM_DOWNLOAD_URL="https://rpm.tuxedocomputers.com/fedora/41/x86_64/base/tuxedo-control-center_3.0.10.rpm"
-else
-    RPM_DOWNLOAD_URL="${TUX_BASE_URL}/${TCC_RPM_NAME}"
-fi
-
-echo "Downloading TCC from ${RPM_DOWNLOAD_URL}..."
-curl -L -o /tmp/tuxedo-control-center.rpm "${RPM_DOWNLOAD_URL}"
-
-rpm -ivh --nodeps /tmp/tuxedo-control-center.rpm
-rm -f /tmp/tuxedo-control-center.rpm
-
-echo "TUXEDO Control Center installed successfully."
+bash /ctx/install-tuxedo-control-center.sh
 
 # Always clean
 dnf5 clean all
