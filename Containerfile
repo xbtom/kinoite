@@ -25,6 +25,13 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     bash /ctx/install-akmods-kernel.sh "$(sed -n 's/^KERNEL_VERSION=//p' /nvidia-rpms/kmods/nvidia-vars)" && \
     /ctx/mechrevo-drivers.sh
 
+FROM base AS ryzenadj-builder
+RUN dnf5 install -y cmake gcc-c++ git make pciutils-devel && \
+    git clone --depth 1 https://github.com/FlyGoat/RyzenAdj.git /tmp/RyzenAdj && \
+    cmake -S /tmp/RyzenAdj -B /tmp/RyzenAdj/build -DCMAKE_BUILD_TYPE=Release && \
+    cmake --build /tmp/RyzenAdj/build --parallel "$(nproc)" && \
+    install -D -m 0755 /tmp/RyzenAdj/build/ryzenadj /out/usr/local/bin/ryzenadj
+
 # Build and publish image
 FROM base
 ## Other possible base images include:
@@ -47,6 +54,8 @@ FROM base
 ## by the package manager.
 
 RUN rm /opt && mkdir /opt
+
+COPY --from=ryzenadj-builder /out/usr/local/bin/ryzenadj /usr/local/bin/ryzenadj
 
 ### MODIFICATIONS
 ## make modifications desired in your image and install packages by modifying the build.sh script
