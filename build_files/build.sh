@@ -27,9 +27,6 @@ curl -L -o /tmp/tuxedo-control-center.rpm "${RPM_DOWNLOAD_URL}"
 rpm -ivh --nodeps /tmp/tuxedo-control-center.rpm
 rm -f /tmp/tuxedo-control-center.rpm
 
-systemctl enable tccd.service
-systemctl enable tccd-sleep.service
-
 echo "TUXEDO Control Center installed successfully."
 
 dnf5 clean all
