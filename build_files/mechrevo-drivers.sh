@@ -36,3 +36,10 @@ make -C "/usr/lib/modules/${KERNEL_VERSION}/build" M="$(pwd)" modules
 # 将编译完成的 .ko 输出到 /out 目录供后续阶段使用
 mkdir -p /out/modules
 find . -name "*.ko" -exec cp {} /out/modules/ \;
+
+if [[ -z "$(find /out/modules -type f -name '*.ko' -print -quit)" ]]; then
+    echo "No Mechrevo kernel modules were built." >&2
+    exit 1
+fi
+
+printf '%s\n' "${KERNEL_VERSION}" > /out/kernel-version

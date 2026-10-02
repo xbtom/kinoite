@@ -7,26 +7,46 @@ dnf5 remove -y \
     kate kate-plugins kate-krunner-plugin kwrite \
     filelight kfind kcharselect khelpcenter kde-partitionmanager
 
-# Copy the contents of system_files/ of the git repo to /
-# cp -avf "/ctx/system_files"/. /
+echo "Installing Mechrevo kernel modules..."
 
-### Install packages
+KERNEL_VERSION="$(< /kernel-out/kernel-version)"
+IMAGE_KERNEL_VERSION="$(rpm -q --qf "%{VERSION}-%{RELEASE}.%{ARCH}\n" kernel-core | head -n 1)"
 
-# Packages can be installed from any enabled yum repo on the image.
-# RPMfusion repos are available by default in ublue main images
-# List of rpmfusion packages can be found here:
-# https://mirrors.rpmfusion.org/mirrorlist?path=free/fedora/updates/43/x86_64/repoview/index.html&protocol=https&redirect=1
+if [[ "${KERNEL_VERSION}" != "${IMAGE_KERNEL_VERSION}" ]]; then
+    echo "Mechrevo modules were built for ${KERNEL_VERSION}, but the image uses ${IMAGE_KERNEL_VERSION}." >&2
+    exit 1
+fi
 
-# this installs a package from fedora repos
-# dnf5 install -y tmux
+if [[ -z "$(find /kernel-out/modules -type f -name '*.ko' -print -quit)" ]]; then
+    echo "No Mechrevo kernel modules were found in /kernel-out/modules." >&2
+    exit 1
+fi
 
-# Use a COPR Example:
-#
-# dnf5 -y copr enable ublue-os/staging
-# dnf5 -y install package
-# Disable COPRs so they don't end up enabled on the final image:
-# dnf5 -y copr disable ublue-os/staging
+MODULE_DIR="/usr/lib/modules/${KERNEL_VERSION}/extra/mechrevo"
+mkdir -p "${MODULE_DIR}"
+install -m 0644 /kernel-out/modules/*.ko "${MODULE_DIR}/"
+depmod -a "${KERNEL_VERSION}"
 
-#### Example for enabling a System Unit File
+echo "Installing TUXEDO Control Center..."
 
-# systemctl enable podman.socket
+dnf5 install -y libayatana-appindicator-gtk3
+
+FEDORA_VER="$(rpm -E %fedora)"
+TUX_BASE_URL="https://rpm.tuxedocomputers.com/fedora/${FEDORA_VER}/x86_64/base"
+TCC_RPM_NAME="$(curl -sL "${TUX_BASE_URL}/" | grep -oE 'href="tuxedo-control-center_[^"]+\.rpm"' | tail -n 1 | cut -d'"' -f2)"
+
+if [ -z "${TCC_RPM_NAME}" ]; then
+    RPM_DOWNLOAD_URL="https://rpm.tuxedocomputers.com/fedora/41/x86_64/base/tuxedo-control-center_3.0.10.rpm"
+else
+    RPM_DOWNLOAD_URL="${TUX_BASE_URL}/${TCC_RPM_NAME}"
+fi
+
+echo "Downloading TCC from ${RPM_DOWNLOAD_URL}..."
+curl -L -o /tmp/tuxedo-control-center.rpm "${RPM_DOWNLOAD_URL}"
+
+rpm -ivh --nodeps /tmp/tuxedo-control-center.rpm
+rm -f /tmp/tuxedo-control-center.rpm
+
+echo "TUXEDO Control Center installed successfully."
+
+dnf5 clean all
