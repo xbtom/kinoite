@@ -1,6 +1,6 @@
 # Base Image
-ARG BASE_IMAGE=ghcr.io/ublue-os/kinoite-main:latest
 ARG FEDORA_MAJOR_VERSION=44
+ARG BASE_IMAGE=ghcr.io/ublue-os/kinoite-main:${FEDORA_MAJOR_VERSION}
 
 # Allow build scripts to be referenced without being copied into the final image
 FROM scratch AS ctx
@@ -10,8 +10,12 @@ COPY system_files /system_files
 FROM ghcr.io/ublue-os/akmods:main-${FEDORA_MAJOR_VERSION} AS akmods-kernel
 FROM ghcr.io/ublue-os/akmods-nvidia-open:main-${FEDORA_MAJOR_VERSION} AS akmods-nvidia-open
 
+FROM ${BASE_IMAGE} AS base
+ARG FEDORA_MAJOR_VERSION
+RUN test "$(rpm -E %fedora)" = "${FEDORA_MAJOR_VERSION}"
+
 # Build mechrevo drivers
-FROM ${BASE_IMAGE} AS kernel-builder
+FROM base AS kernel-builder
 
 RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     --mount=type=bind,from=akmods-kernel,source=/kernel-rpms,target=/kernel-rpms \
@@ -22,7 +26,7 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     /ctx/mechrevo-drivers.sh
 
 # Build and publish image
-FROM ${BASE_IMAGE}
+FROM base
 ## Other possible base images include:
 # FROM ghcr.io/ublue-os/bazzite:testing
 # FROM ghcr.io/ublue-os/aurora:stable

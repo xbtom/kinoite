@@ -5,6 +5,7 @@ This repository is meant to be a template for building your own custom [bootc](h
 # Community
 
 If you have questions about this template after following the instructions, try the following spaces:
+
 - [Universal Blue Forums](https://universal-blue.discourse.group/)
 - [Universal Blue Discord](https://discord.gg/WEu6BdFEtp)
 - [bootc discussion forums](https://github.com/bootc-dev/bootc/discussions) - This is not an Universal Blue managed space, but is an excellent resource if you run into issues with building bootc images.
@@ -19,6 +20,7 @@ If you prefer instructions in video form, TesterTech created an excellent tutori
 ## Step 0: Prerequisites
 
 These steps assume you have the following:
+
 - A Github Account
 - A machine running a bootc image (e.g. Bazzite, Bluefin, Aurora, or Fedora Atomic)
 - Experience installing and using CLI programs
@@ -43,7 +45,7 @@ Once you have the repository on your local drive, proceed to the next step.
 
 ### Step 2a: Creating a Cosign Key
 
-Container signing is important for end-user security and is enabled on all Universal Blue images. By default the image builds *will fail* if you don't.
+Container signing is important for end-user security and is enabled on all Universal Blue images. By default the image builds _will fail_ if you don't.
 
 First, install the [cosign CLI tool](https://edu.chainguard.dev/open-source/sigstore/cosign/how-to-install-cosign/#installing-cosign-with-the-cosign-binary)
 With the cosign tool installed, run inside your repo folder:
@@ -55,7 +57,7 @@ COSIGN_PASSWORD="" cosign generate-key-pair
 The signing key will be used in GitHub Actions and will not work if it is password protected.
 
 > [!WARNING]
-> Be careful to *never* accidentally commit `cosign.key` into your git repo. If this key goes out to the public, the security of your repository is compromised.
+> Be careful to _never_ accidentally commit `cosign.key` into your git repo. If this key goes out to the public, the security of your repository is compromised.
 
 Next, you need to add the key to GitHub. This makes use of GitHub's secret signing system.
 
@@ -66,6 +68,7 @@ Go to your repository settings, under `Secrets and Variables` -> `Actions`
 ![image](https://user-images.githubusercontent.com/1264109/216735595-0ecf1b66-b9ee-439e-87d7-c8cc43c2110a.png)
 Add a new secret and name it `SIGNING_SECRET`, then paste the contents of `cosign.key` into the secret and save it. Make sure it's the .key file and not the .pub file. Once done, it should look like this:
 ![image](https://user-images.githubusercontent.com/1264109/216735690-2d19271f-cee2-45ac-a039-23e6a4c16b34.png)
+
 </details>
 <details>
 <summary>Using the Github CLI</summary>
@@ -75,11 +78,12 @@ If you have the `github-cli` installed, run:
 ```bash
 gh secret set SIGNING_SECRET < cosign.key
 ```
+
 </details>
 
 ### Step 2b: Choosing Your Base Image
 
-To choose a base image, simply modify the line in the container file starting with `FROM`. This will be the image your image derives from, and is your starting point for modifications.
+The base image and the NVIDIA akmods kernel are selected together by `FEDORA_MAJOR_VERSION` in the `Containerfile`. Keep this value aligned with the Fedora release used by your chosen base image; the build fails if they do not match. Renovate can propose a pull request when a new Fedora major release is available, and the pull request build verifies the change.
 For a base image, you can choose any of the Universal Blue images or start from a Fedora Atomic system. Below this paragraph is a dropdown with a non-exhaustive list of potential base images.
 
 <details>
@@ -92,32 +96,39 @@ For a base image, you can choose any of the Universal Blue images or start from 
 - Fedora: `quay.io/fedora/fedora-bootc:44`
 
 You can find more Universal Blue images on the [packages page](https://github.com/orgs/ublue-os/packages).
+
 </details>
 
 If you don't know which image to pick, choosing the one your system is currently on is the best bet for a smooth transition. To find out what image your system currently uses, run the following command:
+
 ```bash
 sudo bootc status
 ```
-This will show you all the info you need to know about your current image. The image you are currently on is displayed after `Booted image:`. Paste that information after the `FROM` statement in the Containerfile to set it as your base image.
+
+This will show you all the info you need to know about your current image. The image you are currently on is displayed after `Booted image:`. If you use a different base image, set `BASE_IMAGE` in the `Containerfile` and keep `FEDORA_MAJOR_VERSION` matched to its Fedora release.
 
 ### Step 2c: Changing Names
 
 Change the `IMAGE_NAME` and `REPO_ORGANIZATION` variable inside the `image-template.env`
 
 To commit and push all the files changed and added in step 2 into your Github repository:
+
 ```bash
 git add Containerfile image-template.env cosign.pub
 git commit -m "Initial Setup"
 git push
 ```
-Once pushed, go look at the Actions tab on your Github repository's page.  The green checkmark should be showing on the top commit, which means your new image is ready!
+
+Once pushed, go look at the Actions tab on your Github repository's page. The green checkmark should be showing on the top commit, which means your new image is ready!
 
 ## Step 3: Switch to Your Image
 
 From your bootc system, run the following command substituting in your Github username and image name where noted.
+
 ```bash
 sudo bootc switch ghcr.io/<username>/<image_name>
 ```
+
 This should queue your image for the next reboot, which you can do immediately after the command finishes. You have officially set up your custom image! See the following section for an explanation of the important parts of the template for customization.
 
 # Repository Contents
@@ -147,12 +158,13 @@ The [build-disk.yml](./.github/workflows/build-disk.yml) Github Actions workflow
 1. Modify `disk_config/iso.toml` to point to your custom container image before generating an ISO image.
 2. If you changed your image name from the default in `build.yml` then in the `build-disk.yml` file edit the `IMAGE_REGISTRY`, `IMAGE_NAME` and `DEFAULT_TAG` environment variables with the correct values. If you did not make changes, skip this step.
 3. Finally, if you want to upload your disk images to S3 then you will need to add your S3 configuration to the repository's Action secrets. This can be found by going to your repository settings, under `Secrets and Variables` -> `Actions`. You will need to add the following
-  - `S3_PROVIDER` - Must match one of the values from the [supported list](https://rclone.org/s3/)
-  - `S3_BUCKET_NAME` - Your unique bucket name
-  - `S3_ACCESS_KEY_ID` - It is recommended that you make a separate key just for this workflow
-  - `S3_SECRET_ACCESS_KEY` - See above.
-  - `S3_REGION` - The region your bucket lives in. If you do not know then set this value to `auto`.
-  - `S3_ENDPOINT` - This value will be specific to the bucket as well.
+
+- `S3_PROVIDER` - Must match one of the values from the [supported list](https://rclone.org/s3/)
+- `S3_BUCKET_NAME` - Your unique bucket name
+- `S3_ACCESS_KEY_ID` - It is recommended that you make a separate key just for this workflow
+- `S3_SECRET_ACCESS_KEY` - See above.
+- `S3_REGION` - The region your bucket lives in. If you do not know then set this value to `auto`.
+- `S3_ENDPOINT` - This value will be specific to the bucket as well.
 
 Once the workflow is done, you'll find the disk images either in your S3 bucket or as part of the summary under `Artifacts` after the workflow is completed.
 
@@ -160,9 +172,9 @@ Once the workflow is done, you'll find the disk images either in your S3 bucket 
 
 This template comes with the necessary tooling to index your image on [artifacthub.io](https://artifacthub.io). Use the `artifacthub-repo.yml` file at the root to verify yourself as the publisher. This is important to you for a few reasons:
 
-- The value of artifacthub is it's one place for people to index their custom images, and since we depend on each other to learn, it helps grow the community. 
+- The value of artifacthub is it's one place for people to index their custom images, and since we depend on each other to learn, it helps grow the community.
 - You get to see your pet project listed with the other cool projects in Cloud Native.
-- Since the site puts your README front and center, it's a good way to learn how to write a good README, learn some marketing, finding your audience, etc. 
+- Since the site puts your README front and center, it's a good way to learn how to write a good README, learn some marketing, finding your audience, etc.
 
 [Discussion Thread](https://universal-blue.discourse.group/t/listing-your-custom-image-on-artifacthub/6446)
 
@@ -173,6 +185,7 @@ The `Justfile` contains various commands and configurations for building and man
 ## Required Utilities
 
 Container build:
+
 - [just](https://just.systems/man/en/introduction.html)
 - [podman](https://docs.podman.io/en/latest)
 - [jq](https://jqlang.org)
@@ -180,6 +193,7 @@ Container build:
 These are usually preinstalled on Universal Blue's Bootc Images.
 
 Linting:
+
 - shfmt
 - shellcheck
 
@@ -204,14 +218,17 @@ just build $target_image $tag
 ```
 
 Arguments:
+
 - `$target_image`: The tag you want to apply to the image (default: `$image_name`).
 - `$tag`: The tag for the image (default: `$default_tag`).
 
 ### Rechunking
+
 We can flatten the layers of container images to make sure there isn't a single huge layer when your image gets published.
 This does not make your image faster to download, just provides better resumability.
 
 #### `just ostree-rechunk`
+
 Rechunks the existing Image with [rpm-ostree](https://coreos.github.io/rpm-ostree/build-chunked-oci/)
 
 ```bash
@@ -219,6 +236,7 @@ just ostree-rechunk $target_image $tag
 ```
 
 #### `just rechunk`
+
 Rechunks the existing Image with [chunkah](https://github.com/coreos/chunkah), this is probably gonna be the default here at some point, try it out, it's cool.
 
 ```bash

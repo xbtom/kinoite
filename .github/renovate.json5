@@ -1,21 +1,37 @@
 {
-  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "config:best-practices",
+  $schema: "https://docs.renovatebot.com/renovate-schema.json",
+  extends: ["config:best-practices"],
+
+  rebaseWhen: "never",
+
+  customManagers: [
+    {
+      customType: "regex",
+      managerFilePatterns: ["/Containerfile/"],
+      matchStrings: ["ARG FEDORA_MAJOR_VERSION=(?<currentValue>\\d+)"],
+      depNameTemplate: "ghcr.io/ublue-os/kinoite-main",
+      datasourceTemplate: "docker",
+      versioningTemplate: "loose",
+    },
   ],
 
-  "rebaseWhen": "never",
-
-  "packageRules": [
+  packageRules: [
     {
-      "automerge": true,
-      "matchUpdateTypes": ["pin", "pinDigest"]
+      matchManagers: ["custom.regex"],
+      matchPackageNames: ["ghcr.io/ublue-os/kinoite-main"],
+      allowedVersions: "/^\\d+$/",
+      groupName: "Fedora major version",
+      automerge: false,
     },
     {
-      "enabled": false,
-      "matchUpdateTypes": ["digest", "pinDigest", "pin"],
-      "matchDepTypes": ["container"],
-      "matchFileNames": [".github/workflows/**.yaml", ".github/workflows/**.yml"],
+      automerge: true,
+      matchUpdateTypes: ["pin", "pinDigest"],
     },
-  ]
+    {
+      enabled: false,
+      matchUpdateTypes: ["digest", "pinDigest", "pin"],
+      matchDepTypes: ["container"],
+      matchFileNames: [".github/workflows/**.yaml", ".github/workflows/**.yml"],
+    },
+  ],
 }
