@@ -34,7 +34,18 @@ fi
 MODULE_DIR="/usr/lib/modules/${KERNEL_VERSION}/extra/mechrevo"
 mkdir -p "${MODULE_DIR}"
 install -m 0644 /kernel-out/modules/*.ko "${MODULE_DIR}/"
+
+RYZEN_SMU_MODULE_DIR="/usr/lib/modules/${KERNEL_VERSION}/extra/ryzen_smu"
+mkdir -p "${RYZEN_SMU_MODULE_DIR}"
+install -m 0644 /kernel-out/ryzen_smu.ko "${RYZEN_SMU_MODULE_DIR}/"
+modinfo -k "${KERNEL_VERSION}" "${RYZEN_SMU_MODULE_DIR}/ryzen_smu.ko" >/dev/null
+
+mkdir -p /usr/lib/modules-load.d
+printf '%s\n' ryzen_smu > /usr/lib/modules-load.d/ryzen_smu.conf
 depmod -a "${KERNEL_VERSION}"
+
+echo "Installing Ryzen SMU and RyzenAdj runtime dependencies..."
+dnf5 install -y pciutils-libs
 
 echo "Installing TUXEDO Control Center..."
 

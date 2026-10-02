@@ -7,7 +7,7 @@ echo "Building Mechrevo drivers for kernel: ${KERNEL_VERSION}"
 
 # 安装编译链及对应的内核头文件
 dnf5 install -y \
-    kernel-devel-${KERNEL_VERSION} \
+    "kernel-devel-${KERNEL_VERSION}" \
     gcc \
     make \
     patch \
@@ -41,5 +41,11 @@ if [[ -z "$(find /out/modules -type f -name '*.ko' -print -quit)" ]]; then
     echo "No Mechrevo kernel modules were built." >&2
     exit 1
 fi
+
+RYZEN_SMU_DIR="${BUILD_DIR}/ryzen_smu"
+git clone --depth 1 https://github.com/amkillam/ryzen_smu.git "${RYZEN_SMU_DIR}"
+make -C "${RYZEN_SMU_DIR}" TARGET="${KERNEL_VERSION}"
+install -m 0644 "${RYZEN_SMU_DIR}/ryzen_smu.ko" /out/ryzen_smu.ko
+modinfo /out/ryzen_smu.ko >/dev/null
 
 printf '%s\n' "${KERNEL_VERSION}" > /out/kernel-version
