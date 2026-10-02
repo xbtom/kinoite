@@ -12,7 +12,7 @@ FROM ${BASE_IMAGE} AS kernel-builder
 RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     --mount=type=cache,dst=/var/cache \
     --mount=type=tmpfs,dst=/tmp \
-    /ctx/build-mechrevo.sh
+    /ctx/mechrevo-drivers.sh
 
 # Build and publish image
 FROM ${BASE_IMAGE}
