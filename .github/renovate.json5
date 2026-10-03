@@ -30,6 +30,15 @@
       matchUpdateTypes: ["pinDigest"],
     },
     {
+      enabled: false,
+      matchManagers: ["dockerfile"],
+      matchPackageNames: [
+        "ghcr.io/ublue-os/akmods",
+        "ghcr.io/ublue-os/akmods-nvidia-open",
+      ],
+      matchUpdateTypes: ["pinDigest"],
+    },
+    {
       automerge: true,
       matchUpdateTypes: ["pin", "pinDigest"],
     },
