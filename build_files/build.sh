@@ -11,7 +11,7 @@ dnf5 remove -y \
     || true
 
 dnf5 install -y \
-    pciutils-libs
+    pciutils-libs \
     || true
 
 echo "Installing the NVIDIA open driver..."
