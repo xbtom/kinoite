@@ -27,7 +27,7 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
 
 FROM base AS ryzenadj-builder
 RUN dnf5 install -y cmake curl gcc-c++ git jq make pciutils-devel && \
-    RYZENADJ_TAG="$(curl -fsSL https://api.github.com/repos/FlyGoat/RyzenAdj/releases/latest | jq -er '.tag_name')" && \
+    RYZENADJ_TAG="$(git ls-remote --tags --sort=v:refname https://github.com/FlyGoat/RyzenAdj.git | grep -v '\^{}' | tail -n1 | sed 's/.*\///')" && \
     git clone --depth 1 --branch "${RYZENADJ_TAG}" https://github.com/FlyGoat/RyzenAdj.git /tmp/RyzenAdj && \
     cmake -S /tmp/RyzenAdj -B /tmp/RyzenAdj/build -DCMAKE_BUILD_TYPE=Release && \
     cmake --build /tmp/RyzenAdj/build --parallel "$(nproc)" && \
@@ -56,7 +56,7 @@ FROM base
 
 RUN rm /opt && mkdir /opt
 
-COPY --from=ryzenadj-builder /out/usr/local/bin/ryzenadj /usr/local/bin/ryzenadj
+COPY --from=ryzenadj-builder /out/usr/local/bin/ryzenadj /usr/bin/ryzenadj
 
 ### MODIFICATIONS
 ## make modifications desired in your image and install packages by modifying the build.sh script
