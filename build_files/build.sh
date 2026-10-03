@@ -40,3 +40,4 @@ bash /ctx/install-tuxedo-control-center.sh
 
 # Always clean
 dnf5 clean all
+rm -rf /boot/*
