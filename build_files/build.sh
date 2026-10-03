@@ -21,7 +21,16 @@ bash /ctx/install-kernel-modules.sh
 
 KERNEL_VERSION="$(rpm -q --qf '%{VERSION}-%{RELEASE}.%{ARCH}' kernel-core)"
 INITRAMFS_PATH="/usr/lib/modules/${KERNEL_VERSION}/initramfs.img"
-dracut --force --no-hostonly "${INITRAMFS_PATH}" "${KERNEL_VERSION}"
+
+export DRACUT_NO_XATTR=1
+dracut \
+    --force \
+    --no-hostonly \
+    --kver "${KERNEL_VERSION}" \
+    --reproducible \
+    --add ostree \
+    "${INITRAMFS_PATH}"
+chmod 0600 "${INITRAMFS_PATH}"
 test -s "${INITRAMFS_PATH}"
 
 echo "Installing Ryzen SMU and RyzenAdj runtime dependencies..."
