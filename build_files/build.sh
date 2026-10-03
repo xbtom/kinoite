@@ -41,6 +41,9 @@ bash /ctx/install-tuxedo-control-center.sh
 # Always clean
 dnf5 clean all
 rm -rf /boot/*
-rm -rf /tmp/* /var/tmp/* /run/*
+rm -rf /run/dnf /run/selinux-policy
 rm -rf /var/lib/rpm-state
 rm -rf /var/lib/xkb/*
+rm -rf /var/tmp/*
+
+true
