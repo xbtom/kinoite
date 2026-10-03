@@ -62,7 +62,8 @@ COPY --from=ryzenadj-builder /out/usr/local/bin/ryzenadj /usr/bin/ryzenadj
 ## make modifications desired in your image and install packages by modifying the build.sh script
 ## the following RUN directive does all the things required to run "build.sh" as recommended.
 
-RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
+RUN --mount=type=secret,id=mok_key,required=false \
+    --mount=type=bind,from=ctx,source=/,target=/ctx \
     --mount=type=bind,from=kernel-builder,source=/out,target=/kernel-out \
     --mount=type=bind,from=akmods-kernel,source=/kernel-rpms,target=/kernel-rpms \
     --mount=type=bind,from=akmods-nvidia-open,source=/rpms,target=/nvidia-rpms \

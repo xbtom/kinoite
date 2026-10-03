@@ -99,6 +99,9 @@ build $target_image=image_name $tag=default_tag:
     set -euox pipefail
 
     BUILD_ARGS=()
+    if [[ -f "/tmp/mok.priv" ]]; then
+        BUILD_ARGS+=("--secret" "id=mok_key,src=/tmp/mok.priv")
+    fi
     LABELS=()
     if [[ -z "$(git status -s)" ]]; then
         GIT_SHA=$(git rev-parse --short HEAD)
