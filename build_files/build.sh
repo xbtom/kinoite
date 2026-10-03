@@ -19,6 +19,11 @@ AKMODNV_PATH=/nvidia-rpms IMAGE_NAME=kinoite /nvidia-rpms/ublue-os/nvidia-instal
 echo "Installing Mechrevo kernel modules..."
 bash /ctx/install-kernel-modules.sh
 
+KERNEL_VERSION="$(rpm -q --qf '%{VERSION}-%{RELEASE}.%{ARCH}' kernel-core)"
+INITRAMFS_PATH="/usr/lib/modules/${KERNEL_VERSION}/initramfs.img"
+dracut --force --no-hostonly "${INITRAMFS_PATH}" "${KERNEL_VERSION}"
+test -s "${INITRAMFS_PATH}"
+
 echo "Installing Ryzen SMU and RyzenAdj runtime dependencies..."
 dnf5 install -y pciutils-libs
 
