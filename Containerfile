@@ -26,8 +26,9 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     /ctx/build-kernel-modules.sh
 
 FROM base AS ryzenadj-builder
-RUN dnf5 install -y cmake gcc-c++ git make pciutils-devel && \
-    git clone --depth 1 https://github.com/FlyGoat/RyzenAdj.git /tmp/RyzenAdj && \
+RUN dnf5 install -y cmake curl gcc-c++ git jq make pciutils-devel && \
+    RYZENADJ_TAG="$(curl -fsSL https://api.github.com/repos/FlyGoat/RyzenAdj/releases/latest | jq -er '.tag_name')" && \
+    git clone --depth 1 --branch "${RYZENADJ_TAG}" https://github.com/FlyGoat/RyzenAdj.git /tmp/RyzenAdj && \
     cmake -S /tmp/RyzenAdj -B /tmp/RyzenAdj/build -DCMAKE_BUILD_TYPE=Release && \
     cmake --build /tmp/RyzenAdj/build --parallel "$(nproc)" && \
     install -D -m 0755 /tmp/RyzenAdj/build/ryzenadj /out/usr/local/bin/ryzenadj

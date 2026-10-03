@@ -25,7 +25,7 @@
     },
     {
       enabled: false,
-      matchManagers: ["dockerfile"],
+      matchManagers: ["custom.regex"],
       matchPackageNames: ["ghcr.io/ublue-os/kinoite-main"],
       matchUpdateTypes: ["pinDigest"],
     },
