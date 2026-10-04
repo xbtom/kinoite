@@ -70,16 +70,16 @@ jobs:
         env:
           MOK_KEY_SECRET: ${{ secrets.MOK_PRIVATE_KEY }}
         run: |
-          if [ -n "${MOK_KEY_SECRET}" ]; then
-            echo "${MOK_KEY_SECRET}" > /tmp/mok.priv
-            chmod 600 /tmp/mok.priv
-            echo "MOK key prepared."
-            echo "MOK file size: $(stat --format=%s /tmp/mok.priv) bytes"
-            echo "MOK line count: $(wc -l < /tmp/mok.priv)"
-          else
+          if [ -z "${MOK_KEY_SECRET}" ]; then
             echo "::warning::MOK_PRIVATE_KEY is empty, kernel modules will not be signed!"
-            touch /tmp/mok.priv
+            exit 0
           fi
+
+          echo "${MOK_KEY_SECRET}" > /tmp/mok.priv
+          chmod 600 /tmp/mok.priv
+          echo "MOK key prepared."
+          echo "MOK file size: $(stat --format=%s /tmp/mok.priv) bytes"
+          echo "MOK line count: $(wc -l < /tmp/mok.priv)"
 
       # This actually builds the container image
       - name: Build Image
