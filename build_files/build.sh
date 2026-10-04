@@ -34,25 +34,25 @@ fi
 MOK_KEY="/run/secrets/mok_key"
 MOK_PUB="/ctx/certs/mok.pub"
 
-if [ -s "${MOK_KEY}" ] && [ -f "${MOK_PUB}" ] && [ -f "${SIGN_FILE}" ]; then
+if [ -s "${MOK_KEY}" ] && [ -s "${MOK_PUB}" ] && [ -f "${SIGN_FILE}" ]; then
     echo "===> Signing kernel modules with MOK key..."
 
-    find "/usr/lib/modules/${KERNEL_VERSION}" -type f \( -name "ryzen_smu.ko*" -o -name "mechrevo*.ko*" \) | while read -r mod; do
+    while IFS= read -r -d '' mod; do
         echo "Signing ${mod}..."
         if [[ "${mod}" == *.xz ]]; then
-            xz -d "${mod}"
+            xz -d -- "${mod}" || { echo "Failed to decompress ${mod}"; exit 1; }
             RAW_KO="${mod%.xz}"
-            "${SIGN_FILE}" sha256 "${MOK_KEY}" "${MOK_PUB}" "${RAW_KO}"
-            xz -f -9 "${RAW_KO}"
+            "${SIGN_FILE}" sha256 "${MOK_KEY}" "${MOK_PUB}" "${RAW_KO}" || { echo "Failed to sign ${RAW_KO}"; exit 1; }
+            xz -f -9 -- "${RAW_KO}" || { echo "Failed to recompress ${RAW_KO}"; exit 1; }
         elif [[ "${mod}" == *.zst ]]; then
-            zstd -d --rm "${mod}"
+            zstd -d --rm -- "${mod}" || { echo "Failed to decompress ${mod}"; exit 1; }
             RAW_KO="${mod%.zst}"
-            "${SIGN_FILE}" sha256 "${MOK_KEY}" "${MOK_PUB}" "${RAW_KO}"
-            zstd -f --rm "${RAW_KO}"
+            "${SIGN_FILE}" sha256 "${MOK_KEY}" "${MOK_PUB}" "${RAW_KO}" || { echo "Failed to sign ${RAW_KO}"; exit 1; }
+            zstd -f --rm -- "${RAW_KO}" || { echo "Failed to recompress ${RAW_KO}"; exit 1; }
         else
-            "${SIGN_FILE}" sha256 "${MOK_KEY}" "${MOK_PUB}" "${mod}"
+            "${SIGN_FILE}" sha256 "${MOK_KEY}" "${MOK_PUB}" "${mod}" || { echo "Failed to sign ${mod}"; exit 1; }
         fi
-    done
+    done < <(find "/usr/lib/modules/${KERNEL_VERSION}" -type f \( -name "ryzen_smu.ko*" -o -name "mechrevo*.ko*" \) -print0)
 
     depmod -a "${KERNEL_VERSION}"
     echo "===> Kernel modules signed successfully!"
