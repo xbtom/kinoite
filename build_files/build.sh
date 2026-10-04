@@ -32,9 +32,19 @@ if [ ! -f "${SIGN_FILE}" ]; then
 fi
 
 MOK_KEY="/run/secrets/mok_key"
-MOK_PUB="/ctx/certs/mok.pub"
+MOK_PUB=""
+for candidate in \
+    "/ctx/certs/mok.pub" \
+    "/ctx/enroll_keys/mok.pub" \
+    "/etc/enroll_keys/mok.pub" \
+    "/etc/pki/akmods/mok.pub"; do
+    if [ -s "${candidate}" ]; then
+        MOK_PUB="${candidate}"
+        break
+    fi
+done
 
-if [ -s "${MOK_KEY}" ] && [ -s "${MOK_PUB}" ] && [ -f "${SIGN_FILE}" ]; then
+if [ -s "${MOK_KEY}" ] && [ -n "${MOK_PUB}" ] && [ -f "${SIGN_FILE}" ]; then
     echo "===> Signing kernel modules with MOK key..."
 
     while IFS= read -r -d '' mod; do
@@ -57,7 +67,10 @@ if [ -s "${MOK_KEY}" ] && [ -s "${MOK_PUB}" ] && [ -f "${SIGN_FILE}" ]; then
     depmod -a "${KERNEL_VERSION}"
     echo "===> Kernel modules signed successfully!"
 else
-    echo "===> WARNING: MOK key, pub cert or sign-file not available. Skipping signing."
+    echo "===> WARNING: MOK key, public key or sign-file not available. Skipping signing."
+    echo "Checked MOK_KEY=${MOK_KEY}"
+    echo "Checked MOK_PUB=${MOK_PUB:-<not found>}"
+    echo "Checked SIGN_FILE=${SIGN_FILE}"
 fi
 # ==============================================================
 
