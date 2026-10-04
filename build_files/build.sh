@@ -31,6 +31,21 @@ if [ ! -f "${SIGN_FILE}" ]; then
     SIGN_FILE="/usr/lib/modules/${KERNEL_VERSION}/build/scripts/sign-file"
 fi
 
+if [ ! -f "${SIGN_FILE}" ]; then
+    echo "Installing kernel-devel to provide sign-file..."
+    dnf5 install -y "kernel-devel-${KERNEL_VERSION}"
+
+    SIGN_FILE="/usr/src/kernels/${KERNEL_VERSION}/scripts/sign-file"
+    if [ ! -f "${SIGN_FILE}" ]; then
+        SIGN_FILE="/usr/lib/modules/${KERNEL_VERSION}/build/scripts/sign-file"
+    fi
+fi
+
+if [ ! -f "${SIGN_FILE}" ]; then
+    echo "ERROR: sign-file is still unavailable after installing kernel-devel." >&2
+    exit 1
+fi
+
 MOK_KEY="/run/secrets/mok_key"
 MOK_PUB=""
 for candidate in \
