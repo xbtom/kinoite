@@ -31,6 +31,21 @@ if [ ! -f "${SIGN_FILE}" ]; then
     SIGN_FILE="/usr/lib/modules/${KERNEL_VERSION}/build/scripts/sign-file"
 fi
 
+if [ ! -f "${SIGN_FILE}" ]; then
+    echo "Installing kernel-devel to provide sign-file..."
+    dnf5 install -y "kernel-devel-${KERNEL_VERSION}"
+
+    SIGN_FILE="/usr/src/kernels/${KERNEL_VERSION}/scripts/sign-file"
+    if [ ! -f "${SIGN_FILE}" ]; then
+        SIGN_FILE="/usr/lib/modules/${KERNEL_VERSION}/build/scripts/sign-file"
+    fi
+fi
+
+if [ ! -f "${SIGN_FILE}" ]; then
+    echo "ERROR: sign-file is still unavailable after installing kernel-devel." >&2
+    exit 1
+fi
+
 MOK_KEY="/run/secrets/mok_key"
 MOK_PUB=""
 for candidate in \
@@ -44,33 +59,96 @@ for candidate in \
     fi
 done
 
-if [ -s "${MOK_KEY}" ] && [ -n "${MOK_PUB}" ] && [ -f "${SIGN_FILE}" ]; then
+echo "MOK key diagnostics:"
+if [ -e "${MOK_KEY}" ]; then
+    echo "  MOK key exists: yes"
+    echo "  MOK key size: $(stat -c '%s' "${MOK_KEY}") bytes"
+    echo "  MOK key readable: $(test -r "${MOK_KEY}" && echo yes || echo no)"
+else
+    echo "  MOK key exists: no"
+fi
+
+echo "  MOK public certificate: ${MOK_PUB:-<not found>}"
+echo "  sign-file: ${SIGN_FILE}"
+echo "  sign-file exists: $(test -f "${SIGN_FILE}" && echo yes || echo no)"
+
+if [ ! -e "${MOK_KEY}" ]; then
+    echo "ERROR: MOK private key does not exist at ${MOK_KEY}" >&2
+elif [ ! -r "${MOK_KEY}" ]; then
+    echo "ERROR: MOK private key is not readable: ${MOK_KEY}" >&2
+elif [ ! -s "${MOK_KEY}" ]; then
+    echo "ERROR: MOK private key is empty: ${MOK_KEY}" >&2
+elif [ -z "${MOK_PUB}" ]; then
+    echo "ERROR: MOK public certificate was not found." >&2
+elif [ ! -f "${SIGN_FILE}" ]; then
+    echo "ERROR: sign-file does not exist: ${SIGN_FILE}" >&2
+else
     echo "===> Signing kernel modules with MOK key..."
+
+    SIGNED_COUNT=0
 
     while IFS= read -r -d '' mod; do
         echo "Signing ${mod}..."
+        SIGNED_COUNT=$((SIGNED_COUNT + 1))
+
         if [[ "${mod}" == *.xz ]]; then
-            xz -d -- "${mod}" || { echo "Failed to decompress ${mod}"; exit 1; }
+            xz -d -- "${mod}" || {
+                echo "Failed to decompress ${mod}" >&2
+                exit 1
+            }
+
             RAW_KO="${mod%.xz}"
-            "${SIGN_FILE}" sha256 "${MOK_KEY}" "${MOK_PUB}" "${RAW_KO}" || { echo "Failed to sign ${RAW_KO}"; exit 1; }
-            xz -f -9 -- "${RAW_KO}" || { echo "Failed to recompress ${RAW_KO}"; exit 1; }
+
+            "${SIGN_FILE}" sha256 "${MOK_KEY}" "${MOK_PUB}" "${RAW_KO}" || {
+                echo "Failed to sign ${RAW_KO}" >&2
+                exit 1
+            }
+
+            xz -f -9 -- "${RAW_KO}" || {
+                echo "Failed to recompress ${RAW_KO}" >&2
+                exit 1
+            }
+
         elif [[ "${mod}" == *.zst ]]; then
-            zstd -d --rm -- "${mod}" || { echo "Failed to decompress ${mod}"; exit 1; }
+            zstd -d --rm -- "${mod}" || {
+                echo "Failed to decompress ${mod}" >&2
+                exit 1
+            }
+
             RAW_KO="${mod%.zst}"
-            "${SIGN_FILE}" sha256 "${MOK_KEY}" "${MOK_PUB}" "${RAW_KO}" || { echo "Failed to sign ${RAW_KO}"; exit 1; }
-            zstd -f --rm -- "${RAW_KO}" || { echo "Failed to recompress ${RAW_KO}"; exit 1; }
+
+            "${SIGN_FILE}" sha256 "${MOK_KEY}" "${MOK_PUB}" "${RAW_KO}" || {
+                echo "Failed to sign ${RAW_KO}" >&2
+                exit 1
+            }
+
+            zstd -f --rm -- "${RAW_KO}" || {
+                echo "Failed to recompress ${RAW_KO}" >&2
+                exit 1
+            }
+
         else
-            "${SIGN_FILE}" sha256 "${MOK_KEY}" "${MOK_PUB}" "${mod}" || { echo "Failed to sign ${mod}"; exit 1; }
+            "${SIGN_FILE}" sha256 "${MOK_KEY}" "${MOK_PUB}" "${mod}" || {
+                echo "Failed to sign ${mod}" >&2
+                exit 1
+            }
         fi
-    done < <(find "/usr/lib/modules/${KERNEL_VERSION}" -type f \( -name "ryzen_smu.ko*" -o -name "mechrevo*.ko*" \) -print0)
+    done < <(
+        find \
+            "/usr/lib/modules/${KERNEL_VERSION}/extra/mechrevo" \
+            "/usr/lib/modules/${KERNEL_VERSION}/extra/ryzen_smu" \
+            -type f \
+            \( -name '*.ko' -o -name '*.ko.xz' -o -name '*.ko.zst' \) \
+            -print0
+    )
+
+    if (( SIGNED_COUNT == 0 )); then
+        echo "ERROR: No kernel modules found to sign." >&2
+        exit 1
+    fi
 
     depmod -a "${KERNEL_VERSION}"
-    echo "===> Kernel modules signed successfully!"
-else
-    echo "===> WARNING: MOK key, public key or sign-file not available. Skipping signing."
-    echo "Checked MOK_KEY=${MOK_KEY}"
-    echo "Checked MOK_PUB=${MOK_PUB:-<not found>}"
-    echo "Checked SIGN_FILE=${SIGN_FILE}"
+    echo "===> Signed ${SIGNED_COUNT} kernel modules successfully."
 fi
 # ==============================================================
 
