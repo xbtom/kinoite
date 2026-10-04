@@ -76,12 +76,17 @@ fi
 
 INITRAMFS_PATH="/usr/lib/modules/${KERNEL_VERSION}/initramfs.img"
 export DRACUT_NO_XATTR=1
+
+# dracut in the build container can try to install the host /root tree when the
+# default root module is included; omitting it keeps the ostree initramfs build
+# working in this environment while preserving the NVIDIA/Mechrevo modules.
 dracut \
     --force \
     --no-hostonly \
     --kver "${KERNEL_VERSION}" \
     --reproducible \
     --add ostree \
+    --omit root \
     "${INITRAMFS_PATH}"
 chmod 0600 "${INITRAMFS_PATH}"
 test -s "${INITRAMFS_PATH}"
