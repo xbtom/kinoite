@@ -6,6 +6,7 @@ ARG BASE_IMAGE=ghcr.io/ublue-os/kinoite-main:${FEDORA_MAJOR_VERSION}
 FROM scratch AS ctx
 COPY build_files /
 COPY system_files /system_files
+COPY enroll_keys /enroll_keys
 
 FROM ghcr.io/ublue-os/akmods:main-${FEDORA_MAJOR_VERSION} AS akmods-kernel
 FROM ghcr.io/ublue-os/akmods-nvidia-open:main-${FEDORA_MAJOR_VERSION} AS akmods-nvidia-open
