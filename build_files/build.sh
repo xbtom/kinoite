@@ -86,7 +86,7 @@ dracut \
     --kver "${KERNEL_VERSION}" \
     --reproducible \
     --add ostree \
-    --omit root \
+    --verbose --keep --show-modules \
     "${INITRAMFS_PATH}"
 chmod 0600 "${INITRAMFS_PATH}"
 test -s "${INITRAMFS_PATH}"
