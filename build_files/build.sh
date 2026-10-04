@@ -47,25 +47,70 @@ done
 if [ -s "${MOK_KEY}" ] && [ -n "${MOK_PUB}" ] && [ -f "${SIGN_FILE}" ]; then
     echo "===> Signing kernel modules with MOK key..."
 
+    SIGNED_COUNT=0
+
     while IFS= read -r -d '' mod; do
         echo "Signing ${mod}..."
+        SIGNED_COUNT=$((SIGNED_COUNT + 1))
+
         if [[ "${mod}" == *.xz ]]; then
-            xz -d -- "${mod}" || { echo "Failed to decompress ${mod}"; exit 1; }
+            xz -d -- "${mod}" || {
+                echo "Failed to decompress ${mod}"
+                exit 1
+            }
+
             RAW_KO="${mod%.xz}"
-            "${SIGN_FILE}" sha256 "${MOK_KEY}" "${MOK_PUB}" "${RAW_KO}" || { echo "Failed to sign ${RAW_KO}"; exit 1; }
-            xz -f -9 -- "${RAW_KO}" || { echo "Failed to recompress ${RAW_KO}"; exit 1; }
+
+            "${SIGN_FILE}" sha256 "${MOK_KEY}" "${MOK_PUB}" "${RAW_KO}" || {
+                echo "Failed to sign ${RAW_KO}"
+                exit 1
+            }
+
+            xz -f -9 -- "${RAW_KO}" || {
+                echo "Failed to recompress ${RAW_KO}"
+                exit 1
+            }
+
         elif [[ "${mod}" == *.zst ]]; then
-            zstd -d --rm -- "${mod}" || { echo "Failed to decompress ${mod}"; exit 1; }
+            zstd -d --rm -- "${mod}" || {
+                echo "Failed to decompress ${mod}"
+                exit 1
+            }
+
             RAW_KO="${mod%.zst}"
-            "${SIGN_FILE}" sha256 "${MOK_KEY}" "${MOK_PUB}" "${RAW_KO}" || { echo "Failed to sign ${RAW_KO}"; exit 1; }
-            zstd -f --rm -- "${RAW_KO}" || { echo "Failed to recompress ${RAW_KO}"; exit 1; }
+
+            "${SIGN_FILE}" sha256 "${MOK_KEY}" "${MOK_PUB}" "${RAW_KO}" || {
+                echo "Failed to sign ${RAW_KO}"
+                exit 1
+            }
+
+            zstd -f --rm -- "${RAW_KO}" || {
+                echo "Failed to recompress ${RAW_KO}"
+                exit 1
+            }
+
         else
-            "${SIGN_FILE}" sha256 "${MOK_KEY}" "${MOK_PUB}" "${mod}" || { echo "Failed to sign ${mod}"; exit 1; }
+            "${SIGN_FILE}" sha256 "${MOK_KEY}" "${MOK_PUB}" "${mod}" || {
+                echo "Failed to sign ${mod}"
+                exit 1
+            }
         fi
-    done < <(find "/usr/lib/modules/${KERNEL_VERSION}" -type f \( -name "ryzen_smu.ko*" -o -name "mechrevo*.ko*" \) -print0)
+    done < <(
+        find \
+            "/usr/lib/modules/${KERNEL_VERSION}/extra/mechrevo" \
+            "/usr/lib/modules/${KERNEL_VERSION}/extra/ryzen_smu" \
+            -type f \
+            \( -name '*.ko' -o -name '*.ko.xz' -o -name '*.ko.zst' \) \
+            -print0
+    )
+
+    if (( SIGNED_COUNT == 0 )); then
+        echo "No kernel modules found to sign." >&2
+        exit 1
+    fi
 
     depmod -a "${KERNEL_VERSION}"
-    echo "===> Kernel modules signed successfully!"
+    echo "===> Signed ${SIGNED_COUNT} kernel modules successfully!"
 else
     echo "===> WARNING: MOK key, public key or sign-file not available. Skipping signing."
     echo "Checked MOK_KEY=${MOK_KEY}"
@@ -88,6 +133,7 @@ dracut \
     --add ostree \
     --verbose --keep --show-modules \
     "${INITRAMFS_PATH}"
+
 chmod 0600 "${INITRAMFS_PATH}"
 test -s "${INITRAMFS_PATH}"
 
