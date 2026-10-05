@@ -137,9 +137,54 @@ This should queue your image for the next reboot, which you can do immediately a
 
 The [Containerfile](./Containerfile) defines the operations used to customize the selected image.This file is the entrypoint for your image build, and works exactly like a regular podman Containerfile. For reference, please see the [Podman Documentation](https://docs.podman.io/en/latest/Introduction.html).
 
-## build.sh
+## build_files
 
-The [build.sh](./build_files/build.sh) file is called from your Containerfile. It is the best place to install new packages or make any other customization to your system. There are customization examples contained within it for your perusal.
+The [build_files](./build_files) directory contains the scripts used to customize the image. Each script has a **single responsibility**, so it can be read, tested, and reused in isolation.
+
+The scripts are grouped by **build stage**, matching the stages of the `Containerfile`, and the step scripts are prefixed with a number so that `ls` shows their execution order:
+
+```
+build_files/
+├── build.sh                        # entrypoint: sequences the final image stage
+├── build-kernel-modules.sh         # entrypoint: sequences the kernel-builder stage
+├── common/
+│   └── install-akmods-kernel.sh    # shared by both stages
+├── kernel-builder/                 # runs only in the kernel-builder stage
+│   ├── 10-install-kernel-build-deps.sh
+│   ├── 20-build-mechrevo-modules.sh
+│   └── 30-build-ryzen-smu-module.sh
+└── image/                          # runs only in the final image stage
+    ├── 10-remove-unneeded-packages.sh
+    ├── 20-install-base-packages.sh
+    ├── 30-install-nvidia-driver.sh
+    ├── 40-install-kernel-modules.sh
+    ├── 50-sign-kernel-modules.sh
+    ├── 60-build-initramfs.sh
+    ├── 70-install-tuxedo-control-center.sh
+    └── 80-clean-image.sh
+```
+
+The Containerfile only calls the two entrypoint scripts, which contain no build logic of their own — they just sequence the focused steps:
+
+- `build.sh` — sequences the customization of the final image.
+- `build-kernel-modules.sh` — sequences the kernel module build stage.
+
+| Script                                           | Responsibility                                                    |
+| ------------------------------------------------ | ----------------------------------------------------------------- |
+| `image/10-remove-unneeded-packages.sh`           | Remove packages that are not needed in the final image.           |
+| `image/20-install-base-packages.sh`              | Install the additional base packages.                             |
+| `image/30-install-nvidia-driver.sh`              | Install the NVIDIA open driver.                                   |
+| `image/40-install-kernel-modules.sh`             | Install the prebuilt Mechrevo / ryzen_smu modules into the image. |
+| `image/50-sign-kernel-modules.sh`                | Sign the out-of-tree kernel modules with the MOK key.             |
+| `image/60-build-initramfs.sh`                    | Build the initramfs with dracut.                                  |
+| `image/70-install-tuxedo-control-center.sh`      | Install the TUXEDO Control Center.                                |
+| `image/80-clean-image.sh`                        | Remove build artifacts and caches from the image.                 |
+| `kernel-builder/10-install-kernel-build-deps.sh` | Install the kernel module build toolchain.                        |
+| `kernel-builder/20-build-mechrevo-modules.sh`    | Build the Mechrevo (TUXEDO) kernel modules.                       |
+| `kernel-builder/30-build-ryzen-smu-module.sh`    | Build the ryzen_smu kernel module.                                |
+| `common/install-akmods-kernel.sh`                | Install the akmods kernel RPMs (used by both stages).             |
+
+To add a new customization, create a dedicated script in the matching stage directory and call it from that stage's entrypoint (`build.sh` or `build-kernel-modules.sh`) instead of inlining logic into the orchestrator.
 
 ## build.yml
 
