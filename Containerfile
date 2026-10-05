@@ -23,7 +23,7 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     --mount=type=bind,from=akmods-nvidia-open,source=/rpms,target=/nvidia-rpms \
     --mount=type=cache,dst=/var/cache \
     --mount=type=tmpfs,dst=/tmp \
-    bash /ctx/install-akmods-kernel.sh "$(sed -n 's/^KERNEL_VERSION=//p' /nvidia-rpms/kmods/nvidia-vars)" && \
+    bash /ctx/common/install-akmods-kernel.sh "$(sed -n 's/^KERNEL_VERSION=//p' /nvidia-rpms/kmods/nvidia-vars)" && \
     /ctx/build-kernel-modules.sh
 
 FROM base AS ryzenadj-builder

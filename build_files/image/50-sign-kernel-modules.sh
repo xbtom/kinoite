@@ -3,7 +3,7 @@
 # Signs the Mechrevo / ryzen_smu kernel modules with the MOK key so the
 # kernel accepts them on a Secure Boot system.
 #
-# Usage: sign-kernel-modules.sh [KERNEL_VERSION]
+# Usage: 50-sign-kernel-modules.sh [KERNEL_VERSION]
 #
 # Responsibility: sign the out-of-tree kernel modules and refresh depmod.
 

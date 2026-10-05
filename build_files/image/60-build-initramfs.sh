@@ -2,7 +2,7 @@
 
 # Builds the initramfs for the installed kernel.
 #
-# Usage: build-initramfs.sh [KERNEL_VERSION]
+# Usage: 60-build-initramfs.sh [KERNEL_VERSION]
 #
 # Responsibility: generate the initramfs only.
 

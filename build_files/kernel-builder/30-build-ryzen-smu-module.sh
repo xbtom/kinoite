@@ -2,7 +2,7 @@
 
 # Builds the ryzen_smu kernel module and installs it into /out/ryzen_smu.ko.
 #
-# Usage: build-ryzen-smu-module.sh KERNEL_VERSION
+# Usage: 30-build-ryzen-smu-module.sh KERNEL_VERSION
 #
 # Responsibility: build the ryzen_smu kernel module only.
 

@@ -3,7 +3,7 @@
 # Builds the Mechrevo (TUXEDO) kernel modules from the AUR DKMS package and
 # copies the resulting .ko files into /out/modules.
 #
-# Usage: build-mechrevo-modules.sh KERNEL_VERSION
+# Usage: 20-build-mechrevo-modules.sh KERNEL_VERSION
 #
 # Responsibility: build the Mechrevo kernel modules only.
 

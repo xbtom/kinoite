@@ -11,27 +11,28 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+IMAGE_STEPS="${SCRIPT_DIR}/image"
 
 echo "===> Removing unneeded packages"
-bash "${SCRIPT_DIR}/remove-unneeded-packages.sh"
+bash "${IMAGE_STEPS}/10-remove-unneeded-packages.sh"
 
 echo "===> Installing base packages"
-bash "${SCRIPT_DIR}/install-base-packages.sh"
+bash "${IMAGE_STEPS}/20-install-base-packages.sh"
 
 echo "===> Installing the NVIDIA open driver"
-bash "${SCRIPT_DIR}/install-nvidia-driver.sh"
+bash "${IMAGE_STEPS}/30-install-nvidia-driver.sh"
 
 echo "===> Installing Mechrevo kernel modules"
-bash "${SCRIPT_DIR}/install-kernel-modules.sh"
+bash "${IMAGE_STEPS}/40-install-kernel-modules.sh"
 
 echo "===> Signing kernel modules"
-bash "${SCRIPT_DIR}/sign-kernel-modules.sh"
+bash "${IMAGE_STEPS}/50-sign-kernel-modules.sh"
 
 echo "===> Building initramfs"
-bash "${SCRIPT_DIR}/build-initramfs.sh"
+bash "${IMAGE_STEPS}/60-build-initramfs.sh"
 
 echo "===> Installing TUXEDO Control Center"
-bash "${SCRIPT_DIR}/install-tuxedo-control-center.sh"
+bash "${IMAGE_STEPS}/70-install-tuxedo-control-center.sh"
 
 echo "===> Cleaning up image"
-bash "${SCRIPT_DIR}/clean-image.sh"
+bash "${IMAGE_STEPS}/80-clean-image.sh"

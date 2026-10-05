@@ -2,7 +2,7 @@
 
 # Installs the toolchain needed to build out-of-tree kernel modules.
 #
-# Usage: install-kernel-build-deps.sh [KERNEL_VERSION]
+# Usage: 10-install-kernel-build-deps.sh [KERNEL_VERSION]
 #
 # Responsibility: install kernel build dependencies only.
 

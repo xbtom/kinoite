@@ -11,12 +11,13 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BUILDER_STEPS="${SCRIPT_DIR}/kernel-builder"
 
 KERNEL_VERSION="$(rpm -q --qf '%{VERSION}-%{RELEASE}.%{ARCH}\n' kernel-core | head -n 1)"
 echo "===> Building kernel modules for kernel: ${KERNEL_VERSION}"
 
-bash "${SCRIPT_DIR}/install-kernel-build-deps.sh" "${KERNEL_VERSION}"
-bash "${SCRIPT_DIR}/build-mechrevo-modules.sh" "${KERNEL_VERSION}"
-bash "${SCRIPT_DIR}/build-ryzen-smu-module.sh" "${KERNEL_VERSION}"
+bash "${BUILDER_STEPS}/10-install-kernel-build-deps.sh" "${KERNEL_VERSION}"
+bash "${BUILDER_STEPS}/20-build-mechrevo-modules.sh" "${KERNEL_VERSION}"
+bash "${BUILDER_STEPS}/30-build-ryzen-smu-module.sh" "${KERNEL_VERSION}"
 
 printf '%s\n' "${KERNEL_VERSION}" > /out/kernel-version
