@@ -44,19 +44,6 @@ for candidate in \
     fi
 done
 
-echo "MOK key diagnostics:"
-if [ -e "${MOK_KEY}" ]; then
-    echo "  MOK key exists: yes"
-    echo "  MOK key size: $(stat -c '%s' "${MOK_KEY}") bytes"
-    echo "  MOK key readable: $(test -r "${MOK_KEY}" && echo yes || echo no)"
-else
-    echo "  MOK key exists: no"
-fi
-
-echo "  MOK public certificate: ${MOK_PUB:-<not found>}"
-echo "  sign-file: ${SIGN_FILE}"
-echo "  sign-file exists: $(test -f "${SIGN_FILE}" && echo yes || echo no)"
-
 if [ ! -e "${MOK_KEY}" ]; then
     echo "ERROR: MOK private key does not exist at ${MOK_KEY}" >&2
 elif [ ! -r "${MOK_KEY}" ]; then
