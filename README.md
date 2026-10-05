@@ -137,9 +137,33 @@ This should queue your image for the next reboot, which you can do immediately a
 
 The [Containerfile](./Containerfile) defines the operations used to customize the selected image.This file is the entrypoint for your image build, and works exactly like a regular podman Containerfile. For reference, please see the [Podman Documentation](https://docs.podman.io/en/latest/Introduction.html).
 
-## build.sh
+## build_files
 
-The [build.sh](./build_files/build.sh) file is called from your Containerfile. It is the best place to install new packages or make any other customization to your system. There are customization examples contained within it for your perusal.
+The [build_files](./build_files) directory contains the scripts used to customize the image. Each script has a **single responsibility**, so it can be read, tested, and reused in isolation.
+
+The Containerfile calls two entrypoint scripts, which only sequence the focused steps:
+
+- `build.sh` — sequences the customization of the final image.
+- `build-kernel-modules.sh` — sequences the kernel module build stage.
+
+The focused step scripts are:
+
+| Script                             | Responsibility                                                    |
+| ---------------------------------- | ----------------------------------------------------------------- |
+| `remove-unneeded-packages.sh`      | Remove packages that are not needed in the final image.           |
+| `install-base-packages.sh`         | Install the additional base packages.                             |
+| `install-akmods-kernel.sh`         | Install the akmods kernel RPMs.                                   |
+| `install-nvidia-driver.sh`         | Install the NVIDIA open driver.                                   |
+| `install-kernel-modules.sh`        | Install the prebuilt Mechrevo / ryzen_smu modules into the image. |
+| `sign-kernel-modules.sh`           | Sign the out-of-tree kernel modules with the MOK key.             |
+| `build-initramfs.sh`               | Build the initramfs with dracut.                                  |
+| `install-tuxedo-control-center.sh` | Install the TUXEDO Control Center.                                |
+| `clean-image.sh`                   | Remove build artifacts and caches from the image.                 |
+| `install-kernel-build-deps.sh`     | Install the kernel module build toolchain.                        |
+| `build-mechrevo-modules.sh`        | Build the Mechrevo (TUXEDO) kernel modules.                       |
+| `build-ryzen-smu-module.sh`        | Build the ryzen_smu kernel module.                                |
+
+To add a new customization, create a dedicated script and call it from `build.sh` (or `build-kernel-modules.sh`) instead of inlining logic into the orchestrator.
 
 ## build.yml
 
