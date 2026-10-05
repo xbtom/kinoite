@@ -1,0 +1,56 @@
+---
+name: Cleanup container images
+
+# Deletes build images (tags) from GHCR that are older than the retention window.
+# Keeps the moving `latest` tag (and anything younger than RETENTION) so the
+# image stays deployable, while reclaiming space from old dated/sha tags.
+on:
+  schedule:
+    # Weekly (Sun 03:17 UTC). Weekly also keeps the action's manifest cache warm
+    # (GitHub evicts caches unused for 7 days).
+    - cron: "17 3 * * 0"
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: "Only log what would be deleted (no changes)"
+        required: false
+        default: false
+        type: boolean
+
+env:
+  IMAGE_NAME: ${{ github.event.repository.name }} # output of build.yml, keep in sync
+  # Images/tags older than this are removed. Tune to taste (e.g. "60 days").
+  RETENTION: "90 days"
+  # Tags that must never be deleted (the moving alias your users pull).
+  PROTECTED_TAGS: "latest"
+
+concurrency:
+  group: cleanup-images
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    name: Delete images older than 90 days
+    runs-on: ubuntu-26.04
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Cleanup GHCR package
+        uses: dataaxiom/ghcr-cleanup-action@v1
+        with:
+          package: ${{ env.IMAGE_NAME }}
+          # Restrict every rule below to images older than the retention window.
+          older-than: ${{ env.RETENTION }}
+          # Delete every tag of images older than the window...
+          delete-tags: "**"
+          # ...except the moving aliases we still need.
+          exclude-tags: ${{ env.PROTECTED_TAGS }}
+          # Also drop dangling/untagged layers and broken multi-arch leftovers.
+          delete-untagged: true
+          delete-orphaned-images: true
+          delete-partial-images: true
+          # Informational post-run check that multi-arch children are intact.
+          validate: true
+          dry-run: ${{ inputs.dry-run || false }}
