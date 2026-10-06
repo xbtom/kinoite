@@ -38,7 +38,7 @@ jobs:
 
     steps:
       - name: Cleanup GHCR package
-        uses: dataaxiom/ghcr-cleanup-action@v1
+        uses: dataaxiom/ghcr-cleanup-action@d52806a0dc70b430571a37da1fde39733ffd640f # v1
         with:
           package: ${{ env.IMAGE_NAME }}
           # Restrict every rule below to images older than the retention window.
