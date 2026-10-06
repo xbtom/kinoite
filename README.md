@@ -159,6 +159,7 @@ build_files/
     ├── 30-install-nvidia-driver.sh
     ├── 40-install-kernel-modules.sh
     ├── 50-sign-kernel-modules.sh
+    ├── 55-remove-build-toolchain.sh
     ├── 60-build-initramfs.sh
     ├── 70-install-tuxedo-control-center.sh
     └── 80-clean-image.sh
@@ -177,6 +178,7 @@ The Containerfile only calls the two entrypoint scripts, which contain no build 
 | `image/30-install-nvidia-driver.sh`              | Install the NVIDIA open driver from RPM Fusion.                       |
 | `image/40-install-kernel-modules.sh`             | Install the prebuilt Mechrevo / ryzen_smu modules into the image.     |
 | `image/50-sign-kernel-modules.sh`                | Sign the out-of-tree kernel modules with the MOK key.                 |
+| `image/55-remove-build-toolchain.sh`             | Drop the kernel module build toolchain from the image.                |
 | `image/60-build-initramfs.sh`                    | Build the initramfs with dracut.                                      |
 | `image/70-install-tuxedo-control-center.sh`      | Install the TUXEDO Control Center.                                    |
 | `image/80-clean-image.sh`                        | Remove build artifacts and caches from the image.                     |

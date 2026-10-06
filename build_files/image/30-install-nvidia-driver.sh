@@ -128,27 +128,10 @@ kargs = ["rd.driver.blacklist=nouveau", "modprobe.blacklist=nouveau", "nvidia-dr
 EOF
 chmod 0644 "${KARGS_CONF}"
 
-# Keep the freshly built modules, but drop the akmod source and the compiler
-# toolchain: the deployed image is immutable, so an on-host akmods rebuild could
-# never work anyway. Back up the built modules first in case dnf decides to
-# remove the generated kmod package along with its build dependencies.
-MODULE_BACKUP="$(mktemp -d)"
-cp -a "${EXTRA_MODULE_DIR}" "${MODULE_BACKUP}/extra"
-
-echo "Removing the NVIDIA akmod build toolchain..."
-dnf5 remove -y \
-    akmod-nvidia \
-    akmods \
-    kmodtool \
-    kernel-devel \
-    gcc gcc-c++ make \
-    || true
-
-mkdir -p "${EXTRA_MODULE_DIR}"
-cp -a "${MODULE_BACKUP}/extra/." "${EXTRA_MODULE_DIR}/"
-rm -rf "${MODULE_BACKUP}"
-
-if [[ -z "$(find "${EXTRA_MODULE_DIR}" -type f -name 'nvidia*.ko*' -print -quit)" ]]; then
-    echo "ERROR: NVIDIA kernel modules disappeared after removing the build toolchain." >&2
-    exit 1
-fi
+# The akmod build toolchain is intentionally left installed here: signing the
+# modules (50-sign-kernel-modules.sh) needs the kernel's `sign-file`, which is a
+# Perl script, and the Perl interpreter only arrives with the
+# akmods/kmodtool dependency chain. Removing the toolchain at this point would
+# force the signing step to reinstall kernel-devel, dragging the whole toolchain
+# (gcc, make, perl, ...) back into the final image. It is dropped by
+# 55-remove-build-toolchain.sh once every module has been signed.
