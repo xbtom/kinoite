@@ -83,7 +83,7 @@ gh secret set SIGNING_SECRET < cosign.key
 
 ### Step 2b: Choosing Your Base Image
 
-The base image is selected by `BASE_IMAGE` in the `Containerfile`, and `FEDORA_MAJOR_VERSION` must match the Fedora release of that base image (the build fails if they do not match). This image is based on `quay.io/fedora-ostree-desktops/kinoite` and builds the NVIDIA open kernel driver from RPM Fusion against the kernel shipped by the base image. Renovate can propose a pull request when a new Fedora major release is available, and the pull request build verifies the change.
+The base image is selected by `BASE_IMAGE` in the `Containerfile`, and `FEDORA_MAJOR_VERSION` must match the Fedora release of that base image (the build fails if they do not match). This image is based on `quay.io/fedora-ostree-desktops/kinoite` and builds the NVIDIA open kernel driver from RPM Fusion against the kernel shipped by the base image. Renovate can propose a pull request when a new Fedora major release is available, and the pull request build verifies the change. The Fedora release is tracked through [endoflife.date](https://endoflife.date/fedora) rather than the base image tags, because the registry also publishes numeric tags for the next branched release and for rawhide; this way only stable (GA) releases are proposed.
 For a base image, you can choose any of the Universal Blue images or start from a Fedora Atomic system. Below this paragraph is a dropdown with a non-exhaustive list of potential base images.
 
 <details>

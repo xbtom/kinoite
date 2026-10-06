@@ -7,27 +7,31 @@
   customManagers: [
     {
       customType: "regex",
+      description: "Fedora release of the base image",
       managerFilePatterns: ["/Containerfile/"],
       matchStrings: ["ARG FEDORA_MAJOR_VERSION=(?<currentValue>\\d+)"],
-      depNameTemplate: "quay.io/fedora-ostree-desktops/kinoite",
-      datasourceTemplate: "docker",
+      // Deliberately NOT the docker datasource on
+      // quay.io/fedora-ostree-desktops/kinoite: that registry also carries a
+      // numeric tag for the next *branched* release and for rawhide, so the
+      // highest tag is always an unreleased Fedora (44 -> 46 instead of 44 -> 45).
+      // endoflife.date only lists GA cycles, so its highest entry is the
+      // current stable Fedora release.
+      datasourceTemplate: "endoflife-date",
+      depNameTemplate: "fedora",
       versioningTemplate: "loose",
     },
   ],
 
   packageRules: [
     {
-      matchManagers: ["custom.regex"],
-      matchPackageNames: ["quay.io/fedora-ostree-desktops/kinoite"],
+      matchDatasources: ["endoflife-date"],
+      matchPackageNames: ["fedora"],
       allowedVersions: "/^\\d+$/",
-      groupName: "Fedora major version",
+      // endoflife.date knows the *planned* release date and may publish the new
+      // cycle shortly before it is GA, so gate the bump on that timestamp.
+      minimumReleaseAge: "1 day",
+      groupName: "Fedora release",
       automerge: false,
-    },
-    {
-      enabled: false,
-      matchManagers: ["custom.regex"],
-      matchPackageNames: ["quay.io/fedora-ostree-desktops/kinoite"],
-      matchUpdateTypes: ["pinDigest"],
     },
     {
       automerge: true,
