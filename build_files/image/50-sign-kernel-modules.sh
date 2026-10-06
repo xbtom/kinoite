@@ -77,7 +77,15 @@ else
                 exit 1
             }
 
-            xz -f -9 -- "${RAW_KO}" || {
+            # Recompress with the exact settings the kernel uses for its own
+            # in-tree modules (scripts/Makefile.modinst:
+            # `xz --check=crc32 --lzma2=dict=1MiB`). The in-kernel module
+            # decompressor (CONFIG_MODULE_DECOMPRESS) only understands these
+            # parameters; a stream produced by a plain `xz -9` (CRC64, 64 MiB
+            # dictionary) is rejected, so the module is never loaded. This is
+            # why the compressed NVIDIA modules used to silently fail to load
+            # while the uncompressed Mechrevo/ryzen_smu `.ko` modules worked.
+            xz -f --check=crc32 --lzma2=dict=1MiB -- "${RAW_KO}" || {
                 echo "Failed to recompress ${RAW_KO}" >&2
                 exit 1
             }
