@@ -169,20 +169,20 @@ The Containerfile only calls the two entrypoint scripts, which contain no build 
 - `build.sh` — sequences the customization of the final image.
 - `build-kernel-modules.sh` — sequences the kernel module build stage.
 
-| Script                                           | Responsibility                                                    |
-| ------------------------------------------------ | ----------------------------------------------------------------- |
-| `image/10-remove-unneeded-packages.sh`           | Remove packages that are not needed in the final image.           |
-| `image/20-install-base-packages.sh`              | Install the additional base packages.                             |
+| Script                                           | Responsibility                                                        |
+| ------------------------------------------------ | --------------------------------------------------------------------- |
+| `image/10-remove-unneeded-packages.sh`           | Remove packages that are not needed in the final image.               |
+| `image/20-install-base-packages.sh`              | Install the additional base packages.                                 |
 | `image/25-install-extra-packages.sh`             | Install extra packages the base image does not ship (e.g. distrobox). |
-| `image/30-install-nvidia-driver.sh`              | Install the NVIDIA open driver from RPM Fusion.                   |
-| `image/40-install-kernel-modules.sh`             | Install the prebuilt Mechrevo / ryzen_smu modules into the image. |
-| `image/50-sign-kernel-modules.sh`                | Sign the out-of-tree kernel modules with the MOK key.             |
-| `image/60-build-initramfs.sh`                    | Build the initramfs with dracut.                                  |
-| `image/70-install-tuxedo-control-center.sh`      | Install the TUXEDO Control Center.                                |
-| `image/80-clean-image.sh`                        | Remove build artifacts and caches from the image.                 |
-| `kernel-builder/10-install-kernel-build-deps.sh` | Install the kernel module build toolchain.                        |
-| `kernel-builder/20-build-mechrevo-modules.sh`    | Build the Mechrevo (TUXEDO) kernel modules.                       |
-| `kernel-builder/30-build-ryzen-smu-module.sh`    | Build the ryzen_smu kernel module.                                |
+| `image/30-install-nvidia-driver.sh`              | Install the NVIDIA open driver from RPM Fusion.                       |
+| `image/40-install-kernel-modules.sh`             | Install the prebuilt Mechrevo / ryzen_smu modules into the image.     |
+| `image/50-sign-kernel-modules.sh`                | Sign the out-of-tree kernel modules with the MOK key.                 |
+| `image/60-build-initramfs.sh`                    | Build the initramfs with dracut.                                      |
+| `image/70-install-tuxedo-control-center.sh`      | Install the TUXEDO Control Center.                                    |
+| `image/80-clean-image.sh`                        | Remove build artifacts and caches from the image.                     |
+| `kernel-builder/10-install-kernel-build-deps.sh` | Install the kernel module build toolchain.                            |
+| `kernel-builder/20-build-mechrevo-modules.sh`    | Build the Mechrevo (TUXEDO) kernel modules.                           |
+| `kernel-builder/30-build-ryzen-smu-module.sh`    | Build the ryzen_smu kernel module.                                    |
 
 To add a new customization, create a dedicated script in the matching stage directory and call it from that stage's entrypoint (`build.sh` or `build-kernel-modules.sh`) instead of inlining logic into the orchestrator.
 
