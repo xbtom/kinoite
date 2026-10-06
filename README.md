@@ -83,7 +83,7 @@ gh secret set SIGNING_SECRET < cosign.key
 
 ### Step 2b: Choosing Your Base Image
 
-The base image and the NVIDIA akmods kernel are selected together by `FEDORA_MAJOR_VERSION` in the `Containerfile`. Keep this value aligned with the Fedora release used by your chosen base image; the build fails if they do not match. Renovate can propose a pull request when a new Fedora major release is available, and the pull request build verifies the change.
+The base image is selected by `BASE_IMAGE` in the `Containerfile`, and `FEDORA_MAJOR_VERSION` must match the Fedora release of that base image (the build fails if they do not match). This image is based on `quay.io/fedora-ostree-desktops/kinoite` and builds the NVIDIA open kernel driver from RPM Fusion against the kernel shipped by the base image. Renovate can propose a pull request when a new Fedora major release is available, and the pull request build verifies the change.
 For a base image, you can choose any of the Universal Blue images or start from a Fedora Atomic system. Below this paragraph is a dropdown with a non-exhaustive list of potential base images.
 
 <details>
@@ -94,6 +94,7 @@ For a base image, you can choose any of the Universal Blue images or start from 
 - Bluefin: `ghcr.io/ublue-os/bluefin:stable`
 - Universal Blue Base: `ghcr.io/ublue-os/base-main:latest`
 - Fedora: `quay.io/fedora/fedora-bootc:44`
+- Fedora Kinoite (ostree desktop): `quay.io/fedora-ostree-desktops/kinoite:44`
 
 You can find more Universal Blue images on the [packages page](https://github.com/orgs/ublue-os/packages).
 
@@ -147,8 +148,6 @@ The scripts are grouped by **build stage**, matching the stages of the `Containe
 build_files/
 ├── build.sh                        # entrypoint: sequences the final image stage
 ├── build-kernel-modules.sh         # entrypoint: sequences the kernel-builder stage
-├── common/
-│   └── install-akmods-kernel.sh    # shared by both stages
 ├── kernel-builder/                 # runs only in the kernel-builder stage
 │   ├── 10-install-kernel-build-deps.sh
 │   ├── 20-build-mechrevo-modules.sh
@@ -156,6 +155,7 @@ build_files/
 └── image/                          # runs only in the final image stage
     ├── 10-remove-unneeded-packages.sh
     ├── 20-install-base-packages.sh
+    ├── 25-install-extra-packages.sh
     ├── 30-install-nvidia-driver.sh
     ├── 40-install-kernel-modules.sh
     ├── 50-sign-kernel-modules.sh
@@ -169,20 +169,20 @@ The Containerfile only calls the two entrypoint scripts, which contain no build 
 - `build.sh` — sequences the customization of the final image.
 - `build-kernel-modules.sh` — sequences the kernel module build stage.
 
-| Script                                           | Responsibility                                                    |
-| ------------------------------------------------ | ----------------------------------------------------------------- |
-| `image/10-remove-unneeded-packages.sh`           | Remove packages that are not needed in the final image.           |
-| `image/20-install-base-packages.sh`              | Install the additional base packages.                             |
-| `image/30-install-nvidia-driver.sh`              | Install the NVIDIA open driver.                                   |
-| `image/40-install-kernel-modules.sh`             | Install the prebuilt Mechrevo / ryzen_smu modules into the image. |
-| `image/50-sign-kernel-modules.sh`                | Sign the out-of-tree kernel modules with the MOK key.             |
-| `image/60-build-initramfs.sh`                    | Build the initramfs with dracut.                                  |
-| `image/70-install-tuxedo-control-center.sh`      | Install the TUXEDO Control Center.                                |
-| `image/80-clean-image.sh`                        | Remove build artifacts and caches from the image.                 |
-| `kernel-builder/10-install-kernel-build-deps.sh` | Install the kernel module build toolchain.                        |
-| `kernel-builder/20-build-mechrevo-modules.sh`    | Build the Mechrevo (TUXEDO) kernel modules.                       |
-| `kernel-builder/30-build-ryzen-smu-module.sh`    | Build the ryzen_smu kernel module.                                |
-| `common/install-akmods-kernel.sh`                | Install the akmods kernel RPMs (used by both stages).             |
+| Script                                           | Responsibility                                                        |
+| ------------------------------------------------ | --------------------------------------------------------------------- |
+| `image/10-remove-unneeded-packages.sh`           | Remove packages that are not needed in the final image.               |
+| `image/20-install-base-packages.sh`              | Install the additional base packages.                                 |
+| `image/25-install-extra-packages.sh`             | Install extra packages the base image does not ship (e.g. distrobox). |
+| `image/30-install-nvidia-driver.sh`              | Install the NVIDIA open driver from RPM Fusion.                       |
+| `image/40-install-kernel-modules.sh`             | Install the prebuilt Mechrevo / ryzen_smu modules into the image.     |
+| `image/50-sign-kernel-modules.sh`                | Sign the out-of-tree kernel modules with the MOK key.                 |
+| `image/60-build-initramfs.sh`                    | Build the initramfs with dracut.                                      |
+| `image/70-install-tuxedo-control-center.sh`      | Install the TUXEDO Control Center.                                    |
+| `image/80-clean-image.sh`                        | Remove build artifacts and caches from the image.                     |
+| `kernel-builder/10-install-kernel-build-deps.sh` | Install the kernel module build toolchain.                            |
+| `kernel-builder/20-build-mechrevo-modules.sh`    | Build the Mechrevo (TUXEDO) kernel modules.                           |
+| `kernel-builder/30-build-ryzen-smu-module.sh`    | Build the ryzen_smu kernel module.                                    |
 
 To add a new customization, create a dedicated script in the matching stage directory and call it from that stage's entrypoint (`build.sh` or `build-kernel-modules.sh`) instead of inlining logic into the orchestrator.
 

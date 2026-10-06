@@ -1,15 +1,12 @@
 # Base Image
 ARG FEDORA_MAJOR_VERSION=44
-ARG BASE_IMAGE=ghcr.io/ublue-os/kinoite-main:${FEDORA_MAJOR_VERSION}
+ARG BASE_IMAGE=quay.io/fedora-ostree-desktops/kinoite:${FEDORA_MAJOR_VERSION}
 
 # Allow build scripts to be referenced without being copied into the final image
 FROM scratch AS ctx
 COPY build_files /
 COPY system_files /system_files
 COPY enroll_keys /enroll_keys
-
-FROM ghcr.io/ublue-os/akmods:main-${FEDORA_MAJOR_VERSION} AS akmods-kernel
-FROM ghcr.io/ublue-os/akmods-nvidia-open:main-${FEDORA_MAJOR_VERSION} AS akmods-nvidia-open
 
 FROM ${BASE_IMAGE} AS base
 ARG FEDORA_MAJOR_VERSION
@@ -19,12 +16,9 @@ RUN test "$(rpm -E %fedora)" = "${FEDORA_MAJOR_VERSION}"
 FROM base AS kernel-builder
 
 RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
-    --mount=type=bind,from=akmods-kernel,source=/kernel-rpms,target=/kernel-rpms \
-    --mount=type=bind,from=akmods-nvidia-open,source=/rpms,target=/nvidia-rpms \
     --mount=type=cache,dst=/var/cache \
     --mount=type=tmpfs,dst=/tmp \
-    bash /ctx/common/install-akmods-kernel.sh "$(sed -n 's/^KERNEL_VERSION=//p' /nvidia-rpms/kmods/nvidia-vars)" && \
-    /ctx/build-kernel-modules.sh
+    bash /ctx/build-kernel-modules.sh
 
 FROM base AS ryzenadj-builder
 RUN dnf5 install -y cmake curl gcc-c++ git jq make pciutils-devel && \
@@ -44,6 +38,7 @@ FROM base
 # ... and so on, here are more base images
 # Universal Blue Images: https://github.com/orgs/ublue-os/packages
 # Fedora base image: quay.io/fedora/fedora-bootc:44
+# Fedora Kinoite (ostree desktop): quay.io/fedora-ostree-desktops/kinoite:44
 # CentOS base images: quay.io/centos-bootc/centos-bootc:stream10
 
 ### [IM]MUTABLE /opt
@@ -66,8 +61,6 @@ COPY --from=ryzenadj-builder /out/usr/local/bin/ryzenadj /usr/bin/ryzenadj
 RUN --mount=type=secret,id=mok_key,required=true \
     --mount=type=bind,from=ctx,source=/,target=/ctx \
     --mount=type=bind,from=kernel-builder,source=/out,target=/kernel-out \
-    --mount=type=bind,from=akmods-kernel,source=/kernel-rpms,target=/kernel-rpms \
-    --mount=type=bind,from=akmods-nvidia-open,source=/rpms,target=/nvidia-rpms \
     --mount=type=cache,dst=/var/cache \
     --mount=type=cache,dst=/var/log \
     --mount=type=tmpfs,dst=/tmp \

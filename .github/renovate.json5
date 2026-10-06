@@ -9,7 +9,7 @@
       customType: "regex",
       managerFilePatterns: ["/Containerfile/"],
       matchStrings: ["ARG FEDORA_MAJOR_VERSION=(?<currentValue>\\d+)"],
-      depNameTemplate: "ghcr.io/ublue-os/kinoite-main",
+      depNameTemplate: "quay.io/fedora-ostree-desktops/kinoite",
       datasourceTemplate: "docker",
       versioningTemplate: "loose",
     },
@@ -18,7 +18,7 @@
   packageRules: [
     {
       matchManagers: ["custom.regex"],
-      matchPackageNames: ["ghcr.io/ublue-os/kinoite-main"],
+      matchPackageNames: ["quay.io/fedora-ostree-desktops/kinoite"],
       allowedVersions: "/^\\d+$/",
       groupName: "Fedora major version",
       automerge: false,
@@ -26,16 +26,7 @@
     {
       enabled: false,
       matchManagers: ["custom.regex"],
-      matchPackageNames: ["ghcr.io/ublue-os/kinoite-main"],
-      matchUpdateTypes: ["pinDigest"],
-    },
-    {
-      enabled: false,
-      matchManagers: ["dockerfile"],
-      matchPackageNames: [
-        "ghcr.io/ublue-os/akmods",
-        "ghcr.io/ublue-os/akmods-nvidia-open",
-      ],
+      matchPackageNames: ["quay.io/fedora-ostree-desktops/kinoite"],
       matchUpdateTypes: ["pinDigest"],
     },
     {
