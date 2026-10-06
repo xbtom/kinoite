@@ -1,7 +1,8 @@
 #!/bin/bash
 
-# Signs the Mechrevo / ryzen_smu kernel modules with the MOK key so the
-# kernel accepts them on a Secure Boot system.
+# Signs the out-of-tree kernel modules (NVIDIA from RPM Fusion, Mechrevo and
+# ryzen_smu) with the MOK key so the kernel accepts them on a Secure Boot
+# system.
 #
 # Usage: 50-sign-kernel-modules.sh [KERNEL_VERSION]
 #
@@ -107,8 +108,7 @@ else
         fi
     done < <(
         find \
-            "/usr/lib/modules/${KERNEL_VERSION}/extra/mechrevo" \
-            "/usr/lib/modules/${KERNEL_VERSION}/extra/ryzen_smu" \
+            "/usr/lib/modules/${KERNEL_VERSION}/extra" \
             -type f \
             \( -name '*.ko' -o -name '*.ko.xz' -o -name '*.ko.zst' \) \
             -print0
