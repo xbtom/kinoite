@@ -19,6 +19,9 @@ bash "${IMAGE_STEPS}/10-remove-unneeded-packages.sh"
 echo "===> Installing base packages"
 bash "${IMAGE_STEPS}/20-install-base-packages.sh"
 
+echo "===> Installing extra packages"
+bash "${IMAGE_STEPS}/25-install-extra-packages.sh"
+
 echo "===> Installing the NVIDIA open driver (RPM Fusion)"
 bash "${IMAGE_STEPS}/30-install-nvidia-driver.sh"
 

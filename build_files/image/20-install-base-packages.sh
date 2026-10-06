@@ -7,6 +7,7 @@ set -euo pipefail
 
 echo "Installing base packages..."
 
+# pciutils-libs provides libpci, the runtime dependency of the ryzenadj binary
+# that the ryzenadj-builder stage compiles and copies into the final image.
 dnf5 install -y \
-    pciutils-libs \
-    || true
+    pciutils-libs

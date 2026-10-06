@@ -155,6 +155,7 @@ build_files/
 └── image/                          # runs only in the final image stage
     ├── 10-remove-unneeded-packages.sh
     ├── 20-install-base-packages.sh
+    ├── 25-install-extra-packages.sh
     ├── 30-install-nvidia-driver.sh
     ├── 40-install-kernel-modules.sh
     ├── 50-sign-kernel-modules.sh
@@ -172,6 +173,7 @@ The Containerfile only calls the two entrypoint scripts, which contain no build 
 | ------------------------------------------------ | ----------------------------------------------------------------- |
 | `image/10-remove-unneeded-packages.sh`           | Remove packages that are not needed in the final image.           |
 | `image/20-install-base-packages.sh`              | Install the additional base packages.                             |
+| `image/25-install-extra-packages.sh`             | Install extra packages the base image does not ship (e.g. distrobox). |
 | `image/30-install-nvidia-driver.sh`              | Install the NVIDIA open driver from RPM Fusion.                   |
 | `image/40-install-kernel-modules.sh`             | Install the prebuilt Mechrevo / ryzen_smu modules into the image. |
 | `image/50-sign-kernel-modules.sh`                | Sign the out-of-tree kernel modules with the MOK key.             |
