@@ -31,6 +31,9 @@ bash "${IMAGE_STEPS}/40-install-kernel-modules.sh"
 echo "===> Signing kernel modules"
 bash "${IMAGE_STEPS}/50-sign-kernel-modules.sh"
 
+echo "===> Removing kernel module build toolchain"
+bash "${IMAGE_STEPS}/55-remove-build-toolchain.sh"
+
 echo "===> Building initramfs"
 bash "${IMAGE_STEPS}/60-build-initramfs.sh"
 
