@@ -1,5 +1,5 @@
 # Base Image
-ARG FEDORA_MAJOR_VERSION=44
+ARG FEDORA_MAJOR_VERSION=46
 ARG BASE_IMAGE=quay.io/fedora-ostree-desktops/kinoite:${FEDORA_MAJOR_VERSION}
 
 # Allow build scripts to be referenced without being copied into the final image
