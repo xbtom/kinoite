@@ -39,6 +39,9 @@ mkdir -p "${EXTRA_MODULE_DIR}"
 cp -a "${MODULE_BACKUP}/extra/." "${EXTRA_MODULE_DIR}/"
 rm -rf "${MODULE_BACKUP}"
 
+userdel -r akmods 2>/dev/null || true
+groupdel akmods 2>/dev/null || true
+
 if [[ -z "$(find "${EXTRA_MODULE_DIR}" -type f -name 'nvidia*.ko*' -print -quit)" ]]; then
     echo "ERROR: NVIDIA kernel modules disappeared after removing the build toolchain." >&2
     exit 1
