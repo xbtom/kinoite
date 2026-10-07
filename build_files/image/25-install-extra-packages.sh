@@ -12,4 +12,5 @@ set -euo pipefail
 echo "Installing extra packages..."
 
 dnf5 install -y \
-    distrobox
+    distrobox \
+    steam-devices
