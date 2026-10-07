@@ -16,3 +16,4 @@ rm -rf /run/dnf /run/selinux-policy
 rm -rf /var/lib/rpm-state
 rm -rf /var/lib/xkb/*
 rm -rf /var/tmp/*
+rm -rf /run/* /tmp/*
