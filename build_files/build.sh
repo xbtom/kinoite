@@ -40,8 +40,5 @@ bash "${IMAGE_STEPS}/60-build-initramfs.sh"
 echo "===> Installing TUXEDO Control Center"
 bash "${IMAGE_STEPS}/70-install-tuxedo-control-center.sh"
 
-echo "===> Tagging delta-update components"
-bash "${IMAGE_STEPS}/75-tag-components.sh"
-
 echo "===> Cleaning up image"
 bash "${IMAGE_STEPS}/80-clean-image.sh"
