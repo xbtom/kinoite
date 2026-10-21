@@ -152,6 +152,10 @@ build_files/
 │   ├── 10-install-kernel-build-deps.sh
 │   ├── 20-build-mechrevo-modules.sh
 │   └── 30-build-ryzen-smu-module.sh
+├── ryzenadj-builder/               # runs only in the ryzenadj-builder stage
+│   └── 10-build-ryzenadj.sh
+├── lib/                            # helpers sourced by the step scripts (not a stage)
+│   └── network.sh
 └── image/                          # runs only in the final image stage
     ├── 10-remove-unneeded-packages.sh
     ├── 20-install-base-packages.sh
@@ -165,7 +169,7 @@ build_files/
     └── 80-clean-image.sh
 ```
 
-The Containerfile only calls the two entrypoint scripts, which contain no build logic of their own — they just sequence the focused steps:
+The Containerfile calls the two entrypoint scripts, which contain no build logic of their own — they just sequence the focused steps (the small `ryzenadj-builder` stage runs its single step script directly):
 
 - `build.sh` — sequences the customization of the final image.
 - `build-kernel-modules.sh` — sequences the kernel module build stage.
@@ -185,8 +189,12 @@ The Containerfile only calls the two entrypoint scripts, which contain no build 
 | `kernel-builder/10-install-kernel-build-deps.sh` | Install the kernel module build toolchain.                            |
 | `kernel-builder/20-build-mechrevo-modules.sh`    | Build the Mechrevo (TUXEDO) kernel modules.                           |
 | `kernel-builder/30-build-ryzen-smu-module.sh`    | Build the ryzen_smu kernel module.                                    |
+| `ryzenadj-builder/10-build-ryzenadj.sh`          | Build the RyzenAdj binary from its latest tagged release.             |
+| `lib/network.sh`                                 | Shared helpers that retry transient network failures.                 |
 
 To add a new customization, create a dedicated script in the matching stage directory and call it from that stage's entrypoint (`build.sh` or `build-kernel-modules.sh`) instead of inlining logic into the orchestrator.
+
+Steps that download anything from an external server (`curl`, `git clone`, ...) must go through the helpers in [`lib/network.sh`](./build_files/lib/network.sh) — `fetch`, `git_clone` and `git_latest_tag` — instead of calling those tools directly. They retry transient failures (DNS hiccups, flaky mirrors, rate limiting, 5xx errors, stalled transfers), so one bad moment on a third-party host does not fail the whole image build.
 
 ## build.yml
 
