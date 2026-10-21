@@ -44,9 +44,35 @@ restore_akmod_hooks() {
 }
 
 echo "Enabling the RPM Fusion repositories..."
-dnf5 install -y \
-    "https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-${FEDORA_VERSION}.noarch.rpm" \
-    "https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-${FEDORA_VERSION}.noarch.rpm"
+# mirrors.rpmfusion.org only redirects to whichever public mirror it picks, and
+# installing straight from that single URL leaves dnf without a fallback mirror:
+# one dead mirror (e.g. a DNS failure, curl error 6) fails the whole image build.
+# Fetch the two tiny release RPMs from the primary host first, keep the
+# redirector as a fallback, and retry each host with a short backoff.
+RPMFUSION_HOSTS=(
+    "https://download1.rpmfusion.org"
+    "https://mirrors.rpmfusion.org"
+)
+RPMFUSION_ATTEMPTS=3
+rpmfusion_enabled=0
+for host in "${RPMFUSION_HOSTS[@]}"; do
+    for ((attempt = 1; attempt <= RPMFUSION_ATTEMPTS; attempt++)); do
+        echo "Installing RPM Fusion release packages from ${host} (attempt ${attempt}/${RPMFUSION_ATTEMPTS})..."
+        if dnf5 install -y \
+            "${host}/free/fedora/rpmfusion-free-release-${FEDORA_VERSION}.noarch.rpm" \
+            "${host}/nonfree/fedora/rpmfusion-nonfree-release-${FEDORA_VERSION}.noarch.rpm"; then
+            rpmfusion_enabled=1
+            break 2
+        fi
+        if ((attempt < RPMFUSION_ATTEMPTS)); then
+            sleep $((attempt * 10))
+        fi
+    done
+done
+if ((rpmfusion_enabled == 0)); then
+    echo "ERROR: failed to install the RPM Fusion release packages from any host." >&2
+    exit 1
+fi
 
 # Install the akmods tooling and the matching kernel-devel FIRST: this creates
 # the unprivileged `akmods` user and provides akmodsbuild, both of which are
