@@ -20,13 +20,12 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     --mount=type=tmpfs,dst=/tmp \
     bash /ctx/build-kernel-modules.sh
 
+# Build RyzenAdj
 FROM base AS ryzenadj-builder
-RUN dnf5 install -y cmake curl gcc-c++ git jq make pciutils-devel && \
-    RYZENADJ_TAG="$(git ls-remote --tags --sort=v:refname https://github.com/FlyGoat/RyzenAdj.git | grep -v '\^{}' | tail -n1 | sed 's/.*\///')" && \
-    git clone --depth 1 --branch "${RYZENADJ_TAG}" https://github.com/FlyGoat/RyzenAdj.git /tmp/RyzenAdj && \
-    cmake -S /tmp/RyzenAdj -B /tmp/RyzenAdj/build -DCMAKE_BUILD_TYPE=Release && \
-    cmake --build /tmp/RyzenAdj/build --parallel "$(nproc)" && \
-    install -D -m 0755 /tmp/RyzenAdj/build/ryzenadj /out/usr/local/bin/ryzenadj
+RUN dnf5 install -y cmake curl gcc-c++ git jq make pciutils-devel
+
+RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
+    bash /ctx/ryzenadj-builder/10-build-ryzenadj.sh
 
 # Build and publish image
 FROM base
