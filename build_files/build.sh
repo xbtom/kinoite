@@ -25,6 +25,9 @@ bash "${IMAGE_STEPS}/25-install-extra-packages.sh"
 echo "===> Installing the NVIDIA open driver (RPM Fusion)"
 bash "${IMAGE_STEPS}/30-install-nvidia-driver.sh"
 
+echo "===> Installing the NVIDIA Container Toolkit (CDI)"
+bash "${IMAGE_STEPS}/35-install-nvidia-container-toolkit.sh"
+
 echo "===> Installing Mechrevo kernel modules"
 bash "${IMAGE_STEPS}/40-install-kernel-modules.sh"
 
