@@ -24,12 +24,7 @@ if fetch "${TUX_BASE_URL}/" "${LISTING_FILE}"; then
     TCC_RPM_NAME="$(grep -oE 'href="tuxedo-control-center_[^"]+\.rpm"' "${LISTING_FILE}" | tail -n 1 | cut -d'"' -f2)" || TCC_RPM_NAME=""
 fi
 
-if [[ -z "${TCC_RPM_NAME}" ]]; then
-    RPM_DOWNLOAD_URL="https://rpm.tuxedocomputers.com/fedora/41/x86_64/base/tuxedo-control-center_3.0.10.rpm"
-    echo "WARNING: could not find the latest TUXEDO Control Center package at ${TUX_BASE_URL}/; falling back to ${RPM_DOWNLOAD_URL}" >&2
-else
-    RPM_DOWNLOAD_URL="${TUX_BASE_URL}/${TCC_RPM_NAME}"
-fi
+RPM_DOWNLOAD_URL="${TUX_BASE_URL}/${TCC_RPM_NAME}"
 
 echo "Downloading TCC from ${RPM_DOWNLOAD_URL}..."
 fetch "${RPM_DOWNLOAD_URL}" "${RPM_FILE}" --retry-all-errors
