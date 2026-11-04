@@ -45,7 +45,14 @@ RPM_DOWNLOAD_URL="${TUX_BASE_URL}/${TCC_RPM_NAME}"
 echo "Importing TUXEDO signing key from ${TUX_KEY_URL}..."
 fetch "${TUX_KEY_URL}" "${KEY_FILE}"
 rpm --import "${KEY_FILE}"
-if ! rpm -q "gpg-pubkey-${TUX_KEY_ID}" >/dev/null 2>&1; then
+
+# Confirm the expected key is now in the rpmdb. Match the key ID anywhere in
+# the gpg-pubkey version string, since newer rpm may use the full fingerprint
+# there instead of the 8-digit short ID. The listing is printed to make a
+# mismatch easy to diagnose from the CI log.
+IMPORTED_KEYS="$(rpm -qa 'gpg-pubkey*' --qf '%{NAME}-%{VERSION}-%{RELEASE}\t%{SUMMARY}\n')"
+echo "${IMPORTED_KEYS}"
+if ! grep -qi "${TUX_KEY_ID}" <<<"${IMPORTED_KEYS}"; then
     echo "ERROR: imported key does not match expected TUXEDO key ID ${TUX_KEY_ID}" >&2
     exit 1
 fi
