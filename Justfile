@@ -174,6 +174,13 @@ ostree-rechunk $target_image=image_name $tag=default_tag:
     # Use the already-built local image to avoid pulling from a remote registry
     RPM_OSTREE_CHUNKER_IMAGE="localhost/${target_image}:${tag}"
 
+    FEDORA_MAJOR_VERSION="$(sed -nE 's/^ARG[[:space:]]+FEDORA_MAJOR_VERSION="?([0-9]+)"?.*/\1/p' Containerfile | head -n1 || true)"
+    if [ -z "${FEDORA_MAJOR_VERSION}" ]; then
+      FEDORA_MAJOR_VERSION="$(podman run --rm --pull=never --entrypoint /bin/sh "${RPM_OSTREE_CHUNKER_IMAGE}" -c '. /usr/lib/os-release && printf "%s" "$VERSION_ID"')"
+    fi
+
+    IMAGE_VERSION="${FEDORA_MAJOR_VERSION}.$(date +%Y%m%d).${GITHUB_RUN_NUMBER:-0}"
+
     GRAPHROOT="$(podman info --format '{{ '{{.Store.GraphRoot}}' }}')"
 
     podman run --rm --pull=never --privileged \
@@ -187,6 +194,7 @@ ostree-rechunk $target_image=image_name $tag=default_tag:
       --format-version=2 \
       --bootc \
       --rootfs /rpm-ostree \
+      --label "org.opencontainers.image.version=${IMAGE_VERSION}" \
       --output "containers-storage:[overlay@/run/host-container-storage+/run/rpm-ostree-storage]localhost/${target_image}:${tag}"
 
 # Generate Default Tag
